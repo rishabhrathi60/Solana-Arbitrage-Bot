@@ -17,6 +17,7 @@ from config import (  # noqa: E402
     MIN_PROFIT_USD,
     TRADE_AMOUNT_USD,
 )
+from execution.paper_trader import get_trade_history, paper_trade  # noqa: E402
 from market_data import get_crypto_prices  # noqa: E402
 from strategies.arbitrage import find_best_opportunity  # noqa: E402
 
@@ -33,6 +34,9 @@ st.title("🤖 Rishabh Multi-Strategy Trading Bot")
 st.caption("Live quote dashboard — live trading is turned off")
 
 
+# -----------------------------
+# Live market prices
+# -----------------------------
 try:
     prices = get_crypto_prices()
 
@@ -64,6 +68,9 @@ except requests.RequestException as error:
     st.code(str(error))
 
 
+# -----------------------------
+# Bot and safety status
+# -----------------------------
 st.divider()
 
 left_column, right_column = st.columns(2)
@@ -72,7 +79,7 @@ with left_column:
     st.subheader("Bot Status")
     st.write("Arbitrage strategy: **Live quote testing**")
     st.write("Trend strategy: **Coming soon**")
-    st.write("Paper trading: **Coming soon**")
+    st.write("Paper trading: **Enabled for approved test quotes**")
 
     if LIVE_TRADING:
         st.error("Live trading is ON")
@@ -86,6 +93,9 @@ with right_column:
     st.write(f"Minimum expected profit: **${MIN_PROFIT_USD:.2f}**")
 
 
+# -----------------------------
+# Safety message
+# -----------------------------
 st.divider()
 
 st.subheader("Important Safety Message")
@@ -96,6 +106,9 @@ st.warning(
 )
 
 
+# -----------------------------
+# Live Jupiter quote
+# -----------------------------
 st.divider()
 
 st.subheader("🔍 Live Jupiter Round-Trip Quote")
@@ -125,6 +138,9 @@ try:
 
     st.subheader(opportunity["decision"])
 
+    if "TEST FURTHER" in opportunity["decision"]:
+        paper_trade(opportunity)
+
     st.write(f"**Ending Amount:** ${opportunity['ending_amount']:.6f}")
     st.write(f"**Price Impact (Buy):** {opportunity['price_impact_1']}")
     st.write(f"**Price Impact (Sell):** {opportunity['price_impact_2']}")
@@ -136,3 +152,18 @@ except requests.RequestException as error:
 except (KeyError, ValueError, TypeError) as error:
     st.error("Jupiter returned information the dashboard could not understand.")
     st.code(str(error))
+
+
+# -----------------------------
+# Paper trade history
+# -----------------------------
+st.divider()
+
+st.subheader("📜 Paper Trade History")
+
+history = get_trade_history()
+
+if history:
+    st.dataframe(history, width="stretch")
+else:
+    st.info("No paper trades yet.")
