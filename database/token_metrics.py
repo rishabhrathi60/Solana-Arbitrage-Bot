@@ -7,6 +7,10 @@ DATABASE = Path(__file__).resolve().parent / "trades.db"
 
 SCANNER_OFFSET_KEY = "filtered_scanner_offset"
 
+LIQUIDITY_SCORE_WEIGHT = 0.45
+VOLUME_SCORE_WEIGHT = 0.40
+PAIR_SCORE_WEIGHT = 0.15
+
 
 def get_database_connection():
     """
@@ -20,6 +24,16 @@ def get_database_connection():
     connection.row_factory = sqlite3.Row
 
     return connection
+
+
+def current_timestamp():
+    """
+    Return the current local timestamp in database format.
+    """
+
+    return datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
 
 def initialize_token_metrics_table():
@@ -100,9 +114,7 @@ def initialize_token_metrics_table():
         """,
         (
             SCANNER_OFFSET_KEY,
-            datetime.now().strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            current_timestamp(),
         ),
     )
 
@@ -127,10 +139,6 @@ def save_token_metrics(
         raise ValueError("A token mint is required.")
 
     initialize_token_metrics_table()
-
-    updated_at = datetime.now().strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
 
     connection = get_database_connection()
     cursor = connection.cursor()
@@ -165,7 +173,7 @@ def save_token_metrics(
             int(pair_count or 0),
             best_pair_address,
             best_dex,
-            updated_at,
+            current_timestamp(),
         ),
     )
 
@@ -212,7 +220,10 @@ def get_token_metrics_batch(batch_size=20):
 
     initialize_token_metrics_table()
 
-    batch_size = max(1, int(batch_size))
+    batch_size = max(
+        1,
+        int(batch_size),
+    )
 
     connection = get_database_connection()
     cursor = connection.cursor()
@@ -227,7 +238,8 @@ def get_token_metrics_batch(batch_size=20):
             token_metrics.metrics_updated_at
         FROM token_universe
         LEFT JOIN token_metrics
-            ON token_universe.mint = token_metrics.mint
+            ON token_universe.mint =
+               token_metrics.mint
         WHERE token_universe.enabled = 1
           AND COALESCE(
                 token_universe.failed_scans,
@@ -250,7 +262,10 @@ def get_token_metrics_batch(batch_size=20):
     rows = cursor.fetchall()
     connection.close()
 
-    return [dict(row) for row in rows]
+    return [
+        dict(row)
+        for row in rows
+    ]
 
 
 def get_metrics_progress():
@@ -309,68 +324,193 @@ def get_metrics_progress():
     }
 
 
+def validate_scanner_filters(
+    minimum_liquidity_usd,
+    minimum_volume_24h_usd,
+):
+    """
+    Validate and normalize scanner filter values.
+    """
+
+    minimum_liquidity_usd = max(
+        0.0,
+        float(minimum_liquidity_usd),
+    )
+
+    minimum_volume_24h_usd = max(
+        0.0,
+        float(minimum_volume_24h_usd),
+    )
+
+    return (
+        minimum_liquidity_usd,
+        minimum_volume_24h_usd,
+    )
+
+
+def get_scored_token_query():
+    """
+    Return the shared SQL query used to score eligible tokens.
+
+    Scores are percentile-based:
+
+    - Liquidity score: 0 to 100
+    - Volume score: 0 to 100
+    - Pair score: 0 to 100
+    - Market score: weighted total from 0 to 100
+
+    Percentile scoring prevents one extremely large token from
+    compressing every other token's score.
+    """
+
+    return """
+        WITH eligible_tokens AS (
+            SELECT
+                token_universe.mint,
+                token_universe.symbol,
+                token_universe.name,
+                token_universe.decimals,
+                token_metrics.price_usd,
+                token_metrics.liquidity_usd,
+                token_metrics.volume_24h_usd,
+                token_metrics.pair_count,
+                token_metrics.best_pair_address,
+                token_metrics.best_dex,
+                token_metrics.metrics_updated_at
+            FROM token_universe
+            INNER JOIN token_metrics
+                ON token_universe.mint =
+                   token_metrics.mint
+            WHERE token_universe.enabled = 1
+              AND COALESCE(
+                    token_universe.failed_scans,
+                    0
+                  ) < 3
+              AND token_metrics.pair_count > 0
+              AND token_metrics.liquidity_usd >= ?
+              AND token_metrics.volume_24h_usd >= ?
+        ),
+        percentile_scores AS (
+            SELECT
+                eligible_tokens.*,
+
+                PERCENT_RANK() OVER (
+                    ORDER BY liquidity_usd ASC
+                ) * 100.0 AS liquidity_score,
+
+                PERCENT_RANK() OVER (
+                    ORDER BY volume_24h_usd ASC
+                ) * 100.0 AS volume_score,
+
+                PERCENT_RANK() OVER (
+                    ORDER BY pair_count ASC
+                ) * 100.0 AS pair_score
+
+            FROM eligible_tokens
+        ),
+        scored_tokens AS (
+            SELECT
+                percentile_scores.*,
+
+                (
+                    liquidity_score * ?
+                    + volume_score * ?
+                    + pair_score * ?
+                ) AS market_score
+
+            FROM percentile_scores
+        )
+        SELECT
+            mint,
+            symbol,
+            name,
+            decimals,
+            price_usd,
+            liquidity_usd,
+            volume_24h_usd,
+            pair_count,
+            best_pair_address,
+            best_dex,
+            metrics_updated_at,
+            ROUND(liquidity_score, 2)
+                AS liquidity_score,
+            ROUND(volume_score, 2)
+                AS volume_score,
+            ROUND(pair_score, 2)
+                AS pair_score,
+            ROUND(market_score, 2)
+                AS market_score
+        FROM scored_tokens
+    """
+
+
+def get_scoring_parameters(
+    minimum_liquidity_usd,
+    minimum_volume_24h_usd,
+):
+    """
+    Return SQL parameters for the scored token query.
+    """
+
+    return (
+        minimum_liquidity_usd,
+        minimum_volume_24h_usd,
+        LIQUIDITY_SCORE_WEIGHT,
+        VOLUME_SCORE_WEIGHT,
+        PAIR_SCORE_WEIGHT,
+    )
+
+
 def get_liquid_tokens(
     minimum_liquidity_usd=100_000,
     minimum_volume_24h_usd=25_000,
     limit=500,
 ):
     """
-    Return eligible tokens ordered by market quality.
+    Return eligible tokens ordered by market score.
 
-    This function does not change the scanner rotation.
+    This function does not change scanner rotation.
     """
 
     initialize_token_metrics_table()
 
-    minimum_liquidity_usd = max(
-        0.0,
-        float(minimum_liquidity_usd),
+    (
+        minimum_liquidity_usd,
+        minimum_volume_24h_usd,
+    ) = validate_scanner_filters(
+        minimum_liquidity_usd,
+        minimum_volume_24h_usd,
     )
-    minimum_volume_24h_usd = max(
-        0.0,
-        float(minimum_volume_24h_usd),
+
+    limit = max(
+        1,
+        int(limit),
     )
-    limit = max(1, int(limit))
 
     connection = get_database_connection()
     cursor = connection.cursor()
 
-    cursor.execute(
-        """
-        SELECT
-            token_universe.mint,
-            token_universe.symbol,
-            token_universe.name,
-            token_universe.decimals,
-            token_metrics.price_usd,
-            token_metrics.liquidity_usd,
-            token_metrics.volume_24h_usd,
-            token_metrics.pair_count,
-            token_metrics.best_pair_address,
-            token_metrics.best_dex,
-            token_metrics.metrics_updated_at
-        FROM token_universe
-        INNER JOIN token_metrics
-            ON token_universe.mint =
-               token_metrics.mint
-        WHERE token_universe.enabled = 1
-          AND COALESCE(
-                token_universe.failed_scans,
-                0
-              ) < 3
-          AND token_metrics.pair_count > 0
-          AND token_metrics.liquidity_usd >= ?
-          AND token_metrics.volume_24h_usd >= ?
+    query = (
+        get_scored_token_query()
+        + """
         ORDER BY
-            token_metrics.liquidity_usd DESC,
-            token_metrics.volume_24h_usd DESC,
-            token_universe.symbol ASC,
-            token_universe.mint ASC
+            market_score DESC,
+            liquidity_usd DESC,
+            volume_24h_usd DESC,
+            pair_count DESC,
+            symbol ASC,
+            mint ASC
         LIMIT ?
-        """,
+        """
+    )
+
+    cursor.execute(
+        query,
         (
-            minimum_liquidity_usd,
-            minimum_volume_24h_usd,
+            *get_scoring_parameters(
+                minimum_liquidity_usd,
+                minimum_volume_24h_usd,
+            ),
             limit,
         ),
     )
@@ -378,7 +518,10 @@ def get_liquid_tokens(
     rows = cursor.fetchall()
     connection.close()
 
-    return [dict(row) for row in rows]
+    return [
+        dict(row)
+        for row in rows
+    ]
 
 
 def count_scanner_tokens(
@@ -391,13 +534,12 @@ def count_scanner_tokens(
 
     initialize_token_metrics_table()
 
-    minimum_liquidity_usd = max(
-        0.0,
-        float(minimum_liquidity_usd),
-    )
-    minimum_volume_24h_usd = max(
-        0.0,
-        float(minimum_volume_24h_usd),
+    (
+        minimum_liquidity_usd,
+        minimum_volume_24h_usd,
+    ) = validate_scanner_filters(
+        minimum_liquidity_usd,
+        minimum_volume_24h_usd,
     )
 
     connection = get_database_connection()
@@ -442,20 +584,31 @@ def get_scanner_tokens(
     """
     Return the next rotating batch of filtered tokens.
 
+    Eligible tokens are ranked by market score before applying
+    the persistent scanner rotation.
+
+    Market score:
+    - 45% liquidity percentile
+    - 40% 24-hour volume percentile
+    - 15% trading-pair percentile
+
     The scanner position is stored in SQLite, so rotation
-    continues even after restarting the bot.
+    continues after restarting the bot.
     """
 
     initialize_token_metrics_table()
 
-    batch_size = max(1, int(batch_size))
-    minimum_liquidity_usd = max(
-        0.0,
-        float(minimum_liquidity_usd),
+    batch_size = max(
+        1,
+        int(batch_size),
     )
-    minimum_volume_24h_usd = max(
-        0.0,
-        float(minimum_volume_24h_usd),
+
+    (
+        minimum_liquidity_usd,
+        minimum_volume_24h_usd,
+    ) = validate_scanner_filters(
+        minimum_liquidity_usd,
+        minimum_volume_24h_usd,
     )
 
     connection = get_database_connection()
@@ -493,17 +646,19 @@ def get_scanner_tokens(
         if total_eligible <= 0:
             cursor.execute(
                 """
-                UPDATE scanner_state
-                SET
+                INSERT INTO scanner_state (
+                    state_key,
+                    state_value,
+                    updated_at
+                )
+                VALUES (?, 0, ?)
+                ON CONFLICT(state_key) DO UPDATE SET
                     state_value = 0,
-                    updated_at = ?
-                WHERE state_key = ?
+                    updated_at = excluded.updated_at
                 """,
                 (
-                    datetime.now().strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    ),
                     SCANNER_OFFSET_KEY,
+                    current_timestamp(),
                 ),
             )
 
@@ -534,51 +689,36 @@ def get_scanner_tokens(
             total_eligible,
         )
 
-        query = """
-            SELECT
-                token_universe.mint,
-                token_universe.symbol,
-                token_universe.name,
-                token_universe.decimals,
-                token_metrics.price_usd,
-                token_metrics.liquidity_usd,
-                token_metrics.volume_24h_usd,
-                token_metrics.pair_count,
-                token_metrics.best_pair_address,
-                token_metrics.best_dex,
-                token_metrics.metrics_updated_at
-            FROM token_universe
-            INNER JOIN token_metrics
-                ON token_universe.mint =
-                   token_metrics.mint
-            WHERE token_universe.enabled = 1
-              AND COALESCE(
-                    token_universe.failed_scans,
-                    0
-                  ) < 3
-              AND token_metrics.pair_count > 0
-              AND token_metrics.liquidity_usd >= ?
-              AND token_metrics.volume_24h_usd >= ?
+        scored_query = (
+            get_scored_token_query()
+            + """
             ORDER BY
-                token_metrics.liquidity_usd DESC,
-                token_metrics.volume_24h_usd DESC,
-                token_universe.symbol ASC,
-                token_universe.mint ASC
+                market_score DESC,
+                liquidity_usd DESC,
+                volume_24h_usd DESC,
+                pair_count DESC,
+                symbol ASC,
+                mint ASC
             LIMIT ?
             OFFSET ?
-        """
+            """
+        )
 
         cursor.execute(
-            query,
+            scored_query,
             (
-                minimum_liquidity_usd,
-                minimum_volume_24h_usd,
+                *get_scoring_parameters(
+                    minimum_liquidity_usd,
+                    minimum_volume_24h_usd,
+                ),
                 number_to_return,
                 current_offset,
             ),
         )
 
-        rows = list(cursor.fetchall())
+        rows = list(
+            cursor.fetchall()
+        )
 
         remaining_needed = (
             number_to_return - len(rows)
@@ -586,16 +726,20 @@ def get_scanner_tokens(
 
         if remaining_needed > 0:
             cursor.execute(
-                query,
+                scored_query,
                 (
-                    minimum_liquidity_usd,
-                    minimum_volume_24h_usd,
+                    *get_scoring_parameters(
+                        minimum_liquidity_usd,
+                        minimum_volume_24h_usd,
+                    ),
                     remaining_needed,
                     0,
                 ),
             )
 
-            rows.extend(cursor.fetchall())
+            rows.extend(
+                cursor.fetchall()
+            )
 
         next_offset = (
             current_offset + len(rows)
@@ -616,15 +760,16 @@ def get_scanner_tokens(
             (
                 SCANNER_OFFSET_KEY,
                 next_offset,
-                datetime.now().strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ),
+                current_timestamp(),
             ),
         )
 
         connection.commit()
 
-        return [dict(row) for row in rows]
+        return [
+            dict(row)
+            for row in rows
+        ]
 
     except Exception:
         connection.rollback()
@@ -634,12 +779,29 @@ def get_scanner_tokens(
         connection.close()
 
 
+def get_top_scored_tokens(
+    minimum_liquidity_usd=50_000,
+    minimum_volume_24h_usd=10_000,
+    limit=20,
+):
+    """
+    Return the highest-scoring eligible tokens without changing
+    the scanner rotation.
+    """
+
+    return get_liquid_tokens(
+        minimum_liquidity_usd=minimum_liquidity_usd,
+        minimum_volume_24h_usd=minimum_volume_24h_usd,
+        limit=limit,
+    )
+
+
 def get_scanner_rotation_status(
     minimum_liquidity_usd=100_000,
     minimum_volume_24h_usd=25_000,
 ):
     """
-    Return the scanner offset and eligible-token count.
+    Return scanner offset, eligible count and progress.
     """
 
     initialize_token_metrics_table()
@@ -664,13 +826,30 @@ def get_scanner_rotation_status(
     row = cursor.fetchone()
     connection.close()
 
+    current_offset = (
+        int(row["state_value"])
+        if row
+        else 0
+    )
+
+    if eligible_count > 0:
+        current_offset %= eligible_count
+
+        rotation_percentage = (
+            current_offset
+            / eligible_count
+            * 100
+        )
+    else:
+        current_offset = 0
+        rotation_percentage = 0.0
+
     return {
-        "current_offset": (
-            int(row["state_value"])
-            if row
-            else 0
-        ),
+        "current_offset": current_offset,
         "eligible_tokens": eligible_count,
+        "rotation_percentage": (
+            rotation_percentage
+        ),
         "updated_at": (
             row["updated_at"]
             if row
@@ -681,7 +860,7 @@ def get_scanner_rotation_status(
 
 def reset_scanner_rotation():
     """
-    Reset filtered scanner rotation to the first token.
+    Reset filtered scanner rotation to the first ranked token.
     """
 
     initialize_token_metrics_table()
@@ -703,9 +882,7 @@ def reset_scanner_rotation():
         """,
         (
             SCANNER_OFFSET_KEY,
-            datetime.now().strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            current_timestamp(),
         ),
     )
 

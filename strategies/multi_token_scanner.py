@@ -5,7 +5,10 @@ import requests
 from dotenv import load_dotenv
 
 from config import MIN_PROFIT_USD, TRADE_AMOUNT_USD
-from database.token_metrics import get_scanner_tokens
+from database.token_metrics import (
+    count_scanner_tokens,
+    get_scanner_tokens,
+)
 from database.token_universe import (
     get_token_batch,
     mark_token_scanned,
@@ -43,14 +46,22 @@ SESSION.headers.update(
 MAXIMUM_QUOTE_ATTEMPTS = 3
 BUY_SELL_WAIT_SECONDS = 2
 TOKEN_WAIT_SECONDS = 3
-BATCH_SIZE = 20
 
-# Set this to False to use the original rotating token universe.
+# Set this to False to use the original token universe.
 USE_MARKET_FILTER = True
 
-# Preliminary filters while token-metrics coverage is still low.
 MINIMUM_LIQUIDITY_USD = 50_000
 MINIMUM_VOLUME_24H_USD = 10_000
+
+# Adaptive scanner rules.
+SMALL_POOL_MAXIMUM = 30
+MEDIUM_POOL_MAXIMUM = 250
+
+MEDIUM_POOL_BATCH_SIZE = 50
+LARGE_POOL_BATCH_SIZE = 100
+
+# Used only when the market filter is disabled.
+FALLBACK_BATCH_SIZE = 20
 
 
 def get_quote(input_mint, output_mint, amount):
@@ -63,6 +74,11 @@ def get_quote(input_mint, output_mint, amount):
 
     if not output_mint:
         raise ValueError("The output mint is missing.")
+
+    if input_mint == output_mint:
+        raise ValueError(
+            "The input and output mint cannot be the same."
+        )
 
     amount = int(amount)
 
@@ -150,10 +166,16 @@ def get_quote(input_mint, output_mint, amount):
     )
 
 
-def create_quote_error_result(symbol, error):
+def create_quote_error_result(
+    symbol,
+    error,
+    token=None,
+):
     """
     Create a standard result when a token cannot be quoted.
     """
+
+    token = token or {}
 
     return {
         "token": symbol,
@@ -169,13 +191,27 @@ def create_quote_error_result(symbol, error):
         "decision": "⚠️ QUOTE ERROR",
         "eligible": False,
         "error": str(error),
+        "market_score": float(
+            token.get("market_score") or 0
+        ),
+        "liquidity_score": float(
+            token.get("liquidity_score") or 0
+        ),
+        "volume_score": float(
+            token.get("volume_score") or 0
+        ),
+        "pair_score": float(
+            token.get("pair_score") or 0
+        ),
     }
 
 
-def scan_one_token(symbol, token_mint):
+def scan_one_token(symbol, token_mint, token=None):
     """
     Test a USDC-to-token-to-USDC round trip.
     """
+
+    token = token or {}
 
     if not symbol:
         raise ValueError("Token symbol is missing.")
@@ -183,6 +219,11 @@ def scan_one_token(symbol, token_mint):
     if not token_mint:
         raise ValueError(
             f"The mint address is missing for {symbol}."
+        )
+
+    if token_mint == USDC_MINT:
+        raise ValueError(
+            "USDC cannot be scanned against itself."
         )
 
     starting_units = int(
@@ -255,18 +296,137 @@ def scan_one_token(symbol, token_mint):
         ),
         "eligible": eligible,
         "error": "",
+        "market_score": float(
+            token.get("market_score") or 0
+        ),
+        "liquidity_score": float(
+            token.get("liquidity_score") or 0
+        ),
+        "volume_score": float(
+            token.get("volume_score") or 0
+        ),
+        "pair_score": float(
+            token.get("pair_score") or 0
+        ),
     }
 
 
-def load_scanner_tokens():
+def calculate_adaptive_batch_size(
+    eligible_token_count,
+):
     """
-    Load either filtered market tokens or the original
-    rotating token batch.
+    Choose scanner batch size from the eligible-token count.
+
+    Rules:
+    - 1 to 30 eligible tokens: scan all.
+    - 31 to 250 eligible tokens: scan 50.
+    - More than 250 eligible tokens: scan 100.
     """
 
-    if USE_MARKET_FILTER:
-        tokens = get_scanner_tokens(
-            batch_size=BATCH_SIZE,
+    eligible_token_count = max(
+        0,
+        int(eligible_token_count),
+    )
+
+    if eligible_token_count == 0:
+        return 0
+
+    if eligible_token_count <= SMALL_POOL_MAXIMUM:
+        return eligible_token_count
+
+    if eligible_token_count <= MEDIUM_POOL_MAXIMUM:
+        return min(
+            MEDIUM_POOL_BATCH_SIZE,
+            eligible_token_count,
+        )
+
+    return min(
+        LARGE_POOL_BATCH_SIZE,
+        eligible_token_count,
+    )
+
+
+def remove_usdc_and_duplicates(tokens):
+    """
+    Remove USDC and duplicate token mints.
+    """
+
+    cleaned_tokens = []
+    seen_mints = set()
+
+    for token in tokens:
+        token_mint = token.get("mint")
+
+        if not token_mint:
+            continue
+
+        if token_mint == USDC_MINT:
+            continue
+
+        if token_mint in seen_mints:
+            continue
+
+        seen_mints.add(token_mint)
+        cleaned_tokens.append(token)
+
+    return cleaned_tokens
+
+
+def load_adaptive_scanner_tokens():
+    """
+    Load an adaptive smart-ranked scanner batch.
+
+    If USDC appears in a batch, another token is requested so
+    the useful scanner batch does not become unnecessarily
+    smaller.
+    """
+
+    eligible_count = count_scanner_tokens(
+        minimum_liquidity_usd=(
+            MINIMUM_LIQUIDITY_USD
+        ),
+        minimum_volume_24h_usd=(
+            MINIMUM_VOLUME_24H_USD
+        ),
+    )
+
+    target_batch_size = calculate_adaptive_batch_size(
+        eligible_count
+    )
+
+    if target_batch_size <= 0:
+        return [], eligible_count, 0
+
+    tokens = get_scanner_tokens(
+        batch_size=target_batch_size,
+        minimum_liquidity_usd=(
+            MINIMUM_LIQUIDITY_USD
+        ),
+        minimum_volume_24h_usd=(
+            MINIMUM_VOLUME_24H_USD
+        ),
+    )
+
+    tokens = remove_usdc_and_duplicates(tokens)
+
+    # USDC may have occupied one position in the first batch.
+    # Request only the missing number of useful tokens.
+    refill_attempts = 0
+    maximum_refill_attempts = 3
+
+    while (
+        len(tokens) < target_batch_size
+        and refill_attempts < maximum_refill_attempts
+        and eligible_count > len(tokens)
+    ):
+        refill_attempts += 1
+
+        missing_count = (
+            target_batch_size - len(tokens)
+        )
+
+        extra_tokens = get_scanner_tokens(
+            batch_size=missing_count,
             minimum_liquidity_usd=(
                 MINIMUM_LIQUIDITY_USD
             ),
@@ -275,9 +435,42 @@ def load_scanner_tokens():
             ),
         )
 
-        print(
-            "Market filter enabled."
+        combined_tokens = (
+            tokens + extra_tokens
         )
+
+        updated_tokens = remove_usdc_and_duplicates(
+            combined_tokens
+        )
+
+        if len(updated_tokens) == len(tokens):
+            break
+
+        tokens = updated_tokens
+
+    return (
+        tokens[:target_batch_size],
+        eligible_count,
+        target_batch_size,
+    )
+
+
+def load_scanner_tokens():
+    """
+    Load smart-filtered tokens or the original token batch.
+    """
+
+    if USE_MARKET_FILTER:
+        (
+            tokens,
+            eligible_count,
+            target_batch_size,
+        ) = load_adaptive_scanner_tokens()
+
+        print("Market filter enabled.")
+        print("Smart market scoring enabled.")
+        print("Adaptive batch sizing enabled.")
+
         print(
             f"Minimum liquidity: "
             f"${MINIMUM_LIQUIDITY_USD:,.0f}"
@@ -285,6 +478,18 @@ def load_scanner_tokens():
         print(
             f"Minimum 24h volume: "
             f"${MINIMUM_VOLUME_24H_USD:,.0f}"
+        )
+        print(
+            f"Eligible token pool: "
+            f"{eligible_count:,}"
+        )
+        print(
+            f"Adaptive target batch: "
+            f"{target_batch_size:,}"
+        )
+        print(
+            f"Useful tokens loaded: "
+            f"{len(tokens):,}"
         )
 
         return tokens
@@ -294,14 +499,67 @@ def load_scanner_tokens():
         "Using the original rotating token batch."
     )
 
-    return get_token_batch(
-        batch_size=BATCH_SIZE
+    tokens = get_token_batch(
+        batch_size=FALLBACK_BATCH_SIZE + 1
+    )
+
+    tokens = remove_usdc_and_duplicates(tokens)
+
+    return tokens[:FALLBACK_BATCH_SIZE]
+
+
+def print_token_market_details(token):
+    """
+    Display stored market metrics and smart scores.
+    """
+
+    market_score = float(
+        token.get("market_score") or 0
+    )
+    liquidity_score = float(
+        token.get("liquidity_score") or 0
+    )
+    volume_score = float(
+        token.get("volume_score") or 0
+    )
+    pair_score = float(
+        token.get("pair_score") or 0
+    )
+
+    liquidity = float(
+        token.get("liquidity_usd") or 0
+    )
+    volume = float(
+        token.get("volume_24h_usd") or 0
+    )
+    pair_count = int(
+        token.get("pair_count") or 0
+    )
+
+    print(
+        f"  Market score: "
+        f"{market_score:.2f}/100"
+    )
+    print(
+        "  Score details: "
+        f"liquidity {liquidity_score:.2f}, "
+        f"volume {volume_score:.2f}, "
+        f"pairs {pair_score:.2f}"
+    )
+    print(
+        f"  Liquidity: ${liquidity:,.2f}"
+    )
+    print(
+        f"  24h volume: ${volume:,.2f}"
+    )
+    print(
+        f"  Trading pairs: {pair_count}"
     )
 
 
 def scan_all_tokens():
     """
-    Load a token batch from SQLite and scan it.
+    Load an adaptive token batch and scan it.
     """
 
     tokens = load_scanner_tokens()
@@ -327,8 +585,8 @@ def scan_all_tokens():
 
     if USE_MARKET_FILTER:
         print(
-            f"Loaded {len(tokens)} filtered tokens "
-            "from the database."
+            f"Loaded {len(tokens)} smart-ranked, "
+            "filtered tokens from the database."
         )
     else:
         print(
@@ -351,30 +609,13 @@ def scan_all_tokens():
         )
 
         if USE_MARKET_FILTER:
-            liquidity = (
-                token.get("liquidity_usd") or 0
-            )
-            volume = (
-                token.get("volume_24h_usd") or 0
-            )
-            pair_count = (
-                token.get("pair_count") or 0
-            )
-
-            print(
-                f"  Liquidity: ${liquidity:,.2f}"
-            )
-            print(
-                f"  24h volume: ${volume:,.2f}"
-            )
-            print(
-                f"  Trading pairs: {pair_count}"
-            )
+            print_token_market_details(token)
 
         try:
             result = scan_one_token(
                 symbol,
                 token_mint,
+                token=token,
             )
 
             print(
@@ -396,6 +637,7 @@ def scan_all_tokens():
             result = create_quote_error_result(
                 symbol,
                 error,
+                token=token,
             )
 
         except Exception as error:
@@ -407,6 +649,7 @@ def scan_all_tokens():
             result = create_quote_error_result(
                 symbol,
                 error,
+                token=token,
             )
 
         results.append(result)
@@ -435,6 +678,7 @@ def scan_all_tokens():
             item["decision"]
             != "⚠️ QUOTE ERROR",
             item["net_profit"],
+            item.get("market_score", 0),
         ),
         reverse=True,
     )
@@ -455,6 +699,9 @@ def scan_all_tokens():
     )
 
     print("\nBatch scan completed.")
+    print(
+        f"Tokens scanned: {len(results)}"
+    )
     print(
         f"Successful quotes: "
         f"{successful_count}"
