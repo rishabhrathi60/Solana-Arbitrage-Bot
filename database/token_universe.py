@@ -85,6 +85,7 @@ def get_token_batch(batch_size=20):
     Return a rotating batch of enabled tokens.
 
     Tokens scanned least recently are returned first.
+    Tokens with three or more failed scans are skipped.
     """
 
     initialize_token_table()
@@ -98,12 +99,14 @@ def get_token_batch(batch_size=20):
         SELECT *
         FROM token_universe
         WHERE enabled = 1
+          AND failed_scans < 3
         ORDER BY
             CASE
                 WHEN last_scan IS NULL THEN 0
                 ELSE 1
             END,
             last_scan ASC,
+            successful_scans DESC,
             symbol ASC
         LIMIT ?
         """,
