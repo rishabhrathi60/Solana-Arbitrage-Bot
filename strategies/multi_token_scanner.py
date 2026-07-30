@@ -1,5 +1,10 @@
 import os
+import threading
 import time
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    as_completed,
+)
 
 import requests
 from dotenv import load_dotenv
@@ -32,20 +37,13 @@ if not JUPITER_API_KEY:
     )
 
 
-SESSION = requests.Session()
-
-SESSION.headers.update(
-    {
-        "x-api-key": JUPITER_API_KEY,
-        "Accept": "application/json",
-        "User-Agent": "Solana-Arbitrage-Bot/1.0",
-    }
-)
-
+# ---------------------------------------------------------
+# Scanner settings
+# ---------------------------------------------------------
 
 MAXIMUM_QUOTE_ATTEMPTS = 3
+REQUEST_TIMEOUT_SECONDS = 20
 BUY_SELL_WAIT_SECONDS = 2
-TOKEN_WAIT_SECONDS = 3
 
 # Set this to False to use the original token universe.
 USE_MARKET_FILTER = True
@@ -53,7 +51,11 @@ USE_MARKET_FILTER = True
 MINIMUM_LIQUIDITY_USD = 50_000
 MINIMUM_VOLUME_24H_USD = 10_000
 
-# Adaptive scanner rules.
+
+# ---------------------------------------------------------
+# Adaptive scanner rules
+# ---------------------------------------------------------
+
 SMALL_POOL_MAXIMUM = 30
 MEDIUM_POOL_MAXIMUM = 250
 
@@ -64,9 +66,110 @@ LARGE_POOL_BATCH_SIZE = 100
 FALLBACK_BATCH_SIZE = 20
 
 
+# ---------------------------------------------------------
+# Parallel scanner settings
+# ---------------------------------------------------------
+
+PARALLEL_SCANNER_ENABLED = True
+
+# Start safely with three workers.
+SCANNER_MAX_WORKERS = 3
+
+# Process-wide Jupiter request ceiling.
+#
+# Each token normally uses two requests:
+# USDC -> token
+# token -> USDC
+#
+# This conservative setting starts one request per second.
+MAX_QUOTE_REQUESTS_PER_MINUTE = 60
+
+MINIMUM_QUOTE_REQUEST_INTERVAL = (
+    60.0 / MAX_QUOTE_REQUESTS_PER_MINUTE
+)
+
+# Keep this at 10 for the first parallel test.
+#
+# After successful testing, change it to:
+#
+# PARALLEL_TEST_TOKEN_LIMIT = None
+PARALLEL_TEST_TOKEN_LIMIT = None
+
+
+# ---------------------------------------------------------
+# Thread-local HTTP and rate-limiter state
+# ---------------------------------------------------------
+
+_thread_local = threading.local()
+
+_rate_limit_lock = threading.Lock()
+_last_quote_request_at = 0.0
+
+
+def get_thread_session():
+    """
+    Return one HTTP session for the current worker thread.
+
+    Each worker owns its own requests.Session rather than
+    sharing one session across multiple threads.
+    """
+
+    if not hasattr(_thread_local, "session"):
+        session = requests.Session()
+
+        session.headers.update(
+            {
+                "x-api-key": JUPITER_API_KEY,
+                "Accept": "application/json",
+                "User-Agent": (
+                    "Solana-Arbitrage-Bot/1.0"
+                ),
+            }
+        )
+
+        _thread_local.session = session
+
+    return _thread_local.session
+
+
+def wait_for_quote_request_slot():
+    """
+    Apply a process-wide Jupiter request-start limit.
+
+    Multiple tokens may be processed concurrently, but HTTP
+    requests start at controlled intervals.
+    """
+
+    global _last_quote_request_at
+
+    with _rate_limit_lock:
+        current_time = time.monotonic()
+
+        elapsed = (
+            current_time - _last_quote_request_at
+        )
+
+        wait_seconds = max(
+            0.0,
+            MINIMUM_QUOTE_REQUEST_INTERVAL - elapsed,
+        )
+
+        if wait_seconds > 0:
+            time.sleep(wait_seconds)
+
+        _last_quote_request_at = time.monotonic()
+
+
 def get_quote(input_mint, output_mint, amount):
     """
     Request a swap quote from Jupiter.
+
+    Includes:
+    - thread-local HTTP sessions;
+    - process-wide request pacing;
+    - rate-limit retries;
+    - temporary server-error retries;
+    - connection and timeout retries.
     """
 
     if not input_mint:
@@ -95,17 +198,20 @@ def get_quote(input_mint, output_mint, amount):
         "restrictIntermediateTokens": "true",
     }
 
+    session = get_thread_session()
     last_error = None
 
     for attempt in range(
         1,
         MAXIMUM_QUOTE_ATTEMPTS + 1,
     ):
+        wait_for_quote_request_slot()
+
         try:
-            response = SESSION.get(
+            response = session.get(
                 JUPITER_QUOTE_URL,
                 params=settings,
-                timeout=20,
+                timeout=REQUEST_TIMEOUT_SECONDS,
             )
 
             if response.status_code == 429:
@@ -118,13 +224,36 @@ def get_quote(input_mint, output_mint, amount):
                 except (TypeError, ValueError):
                     wait_seconds = 5 * attempt
 
+                last_error = requests.HTTPError(
+                    "Jupiter rate limit reached.",
+                    response=response,
+                )
+
                 print(
                     "Jupiter rate limit reached. "
                     f"Waiting {wait_seconds:.0f} seconds."
                 )
 
-                time.sleep(wait_seconds)
-                continue
+                if attempt < MAXIMUM_QUOTE_ATTEMPTS:
+                    time.sleep(wait_seconds)
+                    continue
+
+            if 500 <= response.status_code < 600:
+                wait_seconds = 2 * attempt
+
+                last_error = requests.HTTPError(
+                    "Jupiter returned a temporary server error.",
+                    response=response,
+                )
+
+                print(
+                    "Jupiter temporary server error. "
+                    f"Waiting {wait_seconds} seconds."
+                )
+
+                if attempt < MAXIMUM_QUOTE_ATTEMPTS:
+                    time.sleep(wait_seconds)
+                    continue
 
             response.raise_for_status()
 
@@ -143,21 +272,40 @@ def get_quote(input_mint, output_mint, amount):
 
             return quote
 
+        except (
+            requests.Timeout,
+            requests.ConnectionError,
+        ) as error:
+            last_error = error
+
+            if attempt < MAXIMUM_QUOTE_ATTEMPTS:
+                wait_seconds = 2 * attempt
+
+                print(
+                    "Jupiter connection failed on attempt "
+                    f"{attempt}/{MAXIMUM_QUOTE_ATTEMPTS}. "
+                    f"Waiting {wait_seconds} seconds."
+                )
+
+                time.sleep(wait_seconds)
+                continue
+
         except requests.RequestException as error:
             last_error = error
 
-            if attempt >= MAXIMUM_QUOTE_ATTEMPTS:
-                break
+            if attempt < MAXIMUM_QUOTE_ATTEMPTS:
+                wait_seconds = 2 * attempt
 
-            wait_seconds = 2 * attempt
+                print(
+                    "Jupiter request failed on attempt "
+                    f"{attempt}/{MAXIMUM_QUOTE_ATTEMPTS}. "
+                    f"Waiting {wait_seconds} seconds."
+                )
 
-            print(
-                f"Jupiter request failed on attempt "
-                f"{attempt}/{MAXIMUM_QUOTE_ATTEMPTS}. "
-                f"Waiting {wait_seconds} seconds."
-            )
+                time.sleep(wait_seconds)
+                continue
 
-            time.sleep(wait_seconds)
+            break
 
     raise requests.RequestException(
         "Jupiter quote request failed after "
@@ -245,6 +393,7 @@ def scan_one_token(symbol, token_mint, token=None):
             f"Jupiter returned zero tokens for {symbol}."
         )
 
+    # Allow a brief delay between the buy and sell quotes.
     time.sleep(BUY_SELL_WAIT_SECONDS)
 
     sell_quote = get_quote(
@@ -376,9 +525,8 @@ def load_adaptive_scanner_tokens():
     """
     Load an adaptive smart-ranked scanner batch.
 
-    If USDC appears in a batch, another token is requested so
-    the useful scanner batch does not become unnecessarily
-    smaller.
+    If USDC appears in a batch, additional tokens are requested
+    so the useful scanner batch does not become smaller.
     """
 
     eligible_count = count_scanner_tokens(
@@ -409,8 +557,6 @@ def load_adaptive_scanner_tokens():
 
     tokens = remove_usdc_and_duplicates(tokens)
 
-    # USDC may have occupied one position in the first batch.
-    # Request only the missing number of useful tokens.
     refill_attempts = 0
     maximum_refill_attempts = 3
 
@@ -435,12 +581,8 @@ def load_adaptive_scanner_tokens():
             ),
         )
 
-        combined_tokens = (
-            tokens + extra_tokens
-        )
-
         updated_tokens = remove_usdc_and_duplicates(
-            combined_tokens
+            tokens + extra_tokens
         )
 
         if len(updated_tokens) == len(tokens):
@@ -557,9 +699,203 @@ def print_token_market_details(token):
     )
 
 
+def scan_token_worker(token):
+    """
+    Scan one token inside a worker thread.
+
+    No SQLite writes are performed here.
+    """
+
+    symbol = (
+        token.get("symbol") or "UNKNOWN"
+    )
+    token_mint = token.get("mint")
+
+    try:
+        result = scan_one_token(
+            symbol,
+            token_mint,
+            token=token,
+        )
+
+    except (
+        requests.RequestException,
+        KeyError,
+        TypeError,
+        ValueError,
+    ) as error:
+        result = create_quote_error_result(
+            symbol,
+            error,
+            token=token,
+        )
+
+    except Exception as error:
+        result = create_quote_error_result(
+            symbol,
+            (
+                "Unexpected worker error: "
+                f"{error}"
+            ),
+            token=token,
+        )
+
+    return {
+        "token_data": token,
+        "symbol": symbol,
+        "mint": token_mint,
+        "result": result,
+    }
+
+
+def run_sequential_scanner(tokens):
+    """
+    Scan tokens sequentially.
+
+    This provides an easy fallback if parallel scanning is
+    temporarily disabled.
+    """
+
+    worker_results = []
+
+    for position, token in enumerate(
+        tokens,
+        start=1,
+    ):
+        symbol = (
+            token.get("symbol") or "UNKNOWN"
+        )
+
+        print(
+            f"\nScanning {position}/"
+            f"{len(tokens)}: {symbol}"
+        )
+
+        if USE_MARKET_FILTER:
+            print_token_market_details(token)
+
+        worker_output = scan_token_worker(token)
+        result = worker_output["result"]
+
+        print(
+            f"{symbol}: net profit "
+            f"${result['net_profit']:.6f} "
+            f"{result['decision']}"
+        )
+
+        worker_results.append(worker_output)
+
+    return worker_results
+
+
+def run_parallel_scanner(tokens):
+    """
+    Scan tokens concurrently using a small worker pool.
+    """
+
+    worker_results = []
+
+    with ThreadPoolExecutor(
+        max_workers=SCANNER_MAX_WORKERS,
+        thread_name_prefix="scanner-worker",
+    ) as executor:
+        future_to_token = {
+            executor.submit(
+                scan_token_worker,
+                token,
+            ): token
+            for token in tokens
+        }
+
+        completed_count = 0
+
+        for future in as_completed(
+            future_to_token
+        ):
+            completed_count += 1
+
+            token = future_to_token[future]
+            symbol = (
+                token.get("symbol") or "UNKNOWN"
+            )
+
+            try:
+                worker_output = future.result()
+
+            except Exception as error:
+                worker_output = {
+                    "token_data": token,
+                    "symbol": symbol,
+                    "mint": token.get("mint"),
+                    "result": create_quote_error_result(
+                        symbol,
+                        (
+                            "Worker future failed: "
+                            f"{error}"
+                        ),
+                        token=token,
+                    ),
+                }
+
+            worker_results.append(worker_output)
+
+            print(
+                f"\nCompleted {completed_count}/"
+                f"{len(tokens)}: {symbol}"
+            )
+
+            if USE_MARKET_FILTER:
+                print_token_market_details(token)
+
+            result = worker_output["result"]
+
+            print(
+                f"{symbol}: net profit "
+                f"${result['net_profit']:.6f} "
+                f"{result['decision']}"
+            )
+
+    return worker_results
+
+
+def save_scan_history(worker_results):
+    """
+    Save token scan success or failure from the main thread.
+
+    Keeping SQLite writes out of worker threads reduces the
+    chance of database-locking errors.
+    """
+
+    for worker_output in worker_results:
+        token_mint = worker_output["mint"]
+        symbol = worker_output["symbol"]
+        result = worker_output["result"]
+
+        if not token_mint:
+            continue
+
+        try:
+            mark_token_scanned(
+                token_mint,
+                successful=(
+                    result["decision"]
+                    != "⚠️ QUOTE ERROR"
+                ),
+            )
+
+        except Exception as error:
+            print(
+                "Could not update scan history "
+                f"for {symbol}: {error}"
+            )
+
+
 def scan_all_tokens():
     """
     Load an adaptive token batch and scan it.
+
+    Jupiter requests may run in parallel, while SQLite updates
+    remain in the main thread.
     """
 
     tokens = load_scanner_tokens()
@@ -583,6 +919,19 @@ def scan_all_tokens():
 
         return results
 
+    if PARALLEL_TEST_TOKEN_LIMIT is not None:
+        test_limit = max(
+            1,
+            int(PARALLEL_TEST_TOKEN_LIMIT),
+        )
+
+        tokens = tokens[:test_limit]
+
+        print(
+            f"Parallel test limit enabled: "
+            f"{len(tokens)} tokens."
+        )
+
     if USE_MARKET_FILTER:
         print(
             f"Loaded {len(tokens)} smart-ranked, "
@@ -594,84 +943,36 @@ def scan_all_tokens():
             "tokens from the database."
         )
 
-    for position, token in enumerate(
-        tokens,
-        start=1,
-    ):
-        symbol = (
-            token.get("symbol") or "UNKNOWN"
+    print(
+        f"Parallel scanner: "
+        f"{'enabled' if PARALLEL_SCANNER_ENABLED else 'disabled'}"
+    )
+    print(
+        f"Scanner workers: "
+        f"{SCANNER_MAX_WORKERS}"
+    )
+    print(
+        "Quote request ceiling: "
+        f"{MAX_QUOTE_REQUESTS_PER_MINUTE}/minute"
+    )
+
+    started_at = time.monotonic()
+
+    if PARALLEL_SCANNER_ENABLED:
+        worker_results = run_parallel_scanner(
+            tokens
         )
-        token_mint = token.get("mint")
-
-        print(
-            f"\nScanning {position}/"
-            f"{len(tokens)}: {symbol}"
+    else:
+        worker_results = run_sequential_scanner(
+            tokens
         )
 
-        if USE_MARKET_FILTER:
-            print_token_market_details(token)
+    save_scan_history(worker_results)
 
-        try:
-            result = scan_one_token(
-                symbol,
-                token_mint,
-                token=token,
-            )
-
-            print(
-                f"{symbol}: net profit "
-                f"${result['net_profit']:.6f} "
-                f"{result['decision']}"
-            )
-
-        except (
-            requests.RequestException,
-            KeyError,
-            TypeError,
-            ValueError,
-        ) as error:
-            print(
-                f"Could not scan {symbol}: {error}"
-            )
-
-            result = create_quote_error_result(
-                symbol,
-                error,
-                token=token,
-            )
-
-        except Exception as error:
-            print(
-                "Unexpected error while scanning "
-                f"{symbol}: {error}"
-            )
-
-            result = create_quote_error_result(
-                symbol,
-                error,
-                token=token,
-            )
-
-        results.append(result)
-
-        if token_mint:
-            try:
-                mark_token_scanned(
-                    token_mint,
-                    successful=(
-                        result["decision"]
-                        != "⚠️ QUOTE ERROR"
-                    ),
-                )
-
-            except Exception as error:
-                print(
-                    "Could not update scan history "
-                    f"for {symbol}: {error}"
-                )
-
-        if position < len(tokens):
-            time.sleep(TOKEN_WAIT_SECONDS)
+    for worker_output in worker_results:
+        results.append(
+            worker_output["result"]
+        )
 
     results.sort(
         key=lambda item: (
@@ -698,7 +999,19 @@ def scan_all_tokens():
         for result in results
     )
 
-    print("\nBatch scan completed.")
+    elapsed_seconds = (
+        time.monotonic() - started_at
+    )
+
+    tokens_per_minute = (
+        len(results)
+        / elapsed_seconds
+        * 60
+        if elapsed_seconds > 0
+        else 0.0
+    )
+
+    print("\nParallel batch scan completed.")
     print(
         f"Tokens scanned: {len(results)}"
     )
@@ -712,6 +1025,14 @@ def scan_all_tokens():
     print(
         f"Eligible opportunities: "
         f"{eligible_count}"
+    )
+    print(
+        f"Elapsed time: "
+        f"{elapsed_seconds:.1f} seconds"
+    )
+    print(
+        f"Scanner speed: "
+        f"{tokens_per_minute:.1f} tokens/minute"
     )
 
     return results
