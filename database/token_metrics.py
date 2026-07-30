@@ -5,13 +5,18 @@ from pathlib import Path
 
 DATABASE = Path(__file__).resolve().parent / "trades.db"
 
+SCANNER_OFFSET_KEY = "filtered_scanner_offset"
+
 
 def get_database_connection():
     """
     Create a SQLite connection that returns rows as dictionaries.
     """
 
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(
+        DATABASE,
+        timeout=30,
+    )
     connection.row_factory = sqlite3.Row
 
     return connection
@@ -19,7 +24,7 @@ def get_database_connection():
 
 def initialize_token_metrics_table():
     """
-    Create the token_metrics table and indexes if they do not exist.
+    Create the token metrics and scanner state tables.
     """
 
     connection = get_database_connection()
@@ -38,6 +43,16 @@ def initialize_token_metrics_table():
             metrics_updated_at TEXT,
             FOREIGN KEY (mint)
                 REFERENCES token_universe(mint)
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS scanner_state (
+            state_key TEXT PRIMARY KEY,
+            state_value INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT
         )
         """
     )
@@ -72,6 +87,23 @@ def initialize_token_metrics_table():
         idx_token_metrics_pair_count
         ON token_metrics(pair_count)
         """
+    )
+
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO scanner_state (
+            state_key,
+            state_value,
+            updated_at
+        )
+        VALUES (?, 0, ?)
+        """,
+        (
+            SCANNER_OFFSET_KEY,
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+        ),
     )
 
     connection.commit()
@@ -171,11 +203,11 @@ def get_token_metrics(mint):
 
 def get_token_metrics_batch(batch_size=20):
     """
-    Return the next rotating batch of enabled tokens.
+    Return the next rotating metrics-update batch.
 
     Priority:
     1. Tokens that have never had metrics downloaded.
-    2. Tokens with the oldest metrics update timestamp.
+    2. Tokens with the oldest metrics timestamp.
     """
 
     initialize_token_metrics_table()
@@ -197,10 +229,14 @@ def get_token_metrics_batch(batch_size=20):
         LEFT JOIN token_metrics
             ON token_universe.mint = token_metrics.mint
         WHERE token_universe.enabled = 1
-          AND COALESCE(token_universe.failed_scans, 0) < 3
+          AND COALESCE(
+                token_universe.failed_scans,
+                0
+              ) < 3
         ORDER BY
             CASE
-                WHEN token_metrics.metrics_updated_at IS NULL
+                WHEN token_metrics.metrics_updated_at
+                     IS NULL
                 THEN 0
                 ELSE 1
             END ASC,
@@ -219,7 +255,7 @@ def get_token_metrics_batch(batch_size=20):
 
 def get_metrics_progress():
     """
-    Return metrics-population progress for enabled tokens.
+    Return metrics-population progress.
     """
 
     initialize_token_metrics_table()
@@ -236,16 +272,22 @@ def get_metrics_progress():
         """
     )
 
-    total_enabled = cursor.fetchone()["total_enabled"]
+    total_enabled = cursor.fetchone()[
+        "total_enabled"
+    ]
 
     cursor.execute(
         """
         SELECT COUNT(*) AS tokens_with_metrics
         FROM token_metrics
         INNER JOIN token_universe
-            ON token_universe.mint = token_metrics.mint
+            ON token_universe.mint =
+               token_metrics.mint
         WHERE token_universe.enabled = 1
-          AND COALESCE(token_universe.failed_scans, 0) < 3
+          AND COALESCE(
+                token_universe.failed_scans,
+                0
+              ) < 3
         """
     )
 
@@ -273,9 +315,9 @@ def get_liquid_tokens(
     limit=500,
 ):
     """
-    Return enabled tokens meeting minimum market requirements.
+    Return eligible tokens ordered by market quality.
 
-    This includes market metrics in the returned dictionaries.
+    This function does not change the scanner rotation.
     """
 
     initialize_token_metrics_table()
@@ -309,16 +351,21 @@ def get_liquid_tokens(
             token_metrics.metrics_updated_at
         FROM token_universe
         INNER JOIN token_metrics
-            ON token_universe.mint = token_metrics.mint
+            ON token_universe.mint =
+               token_metrics.mint
         WHERE token_universe.enabled = 1
-          AND COALESCE(token_universe.failed_scans, 0) < 3
+          AND COALESCE(
+                token_universe.failed_scans,
+                0
+              ) < 3
           AND token_metrics.pair_count > 0
           AND token_metrics.liquidity_usd >= ?
           AND token_metrics.volume_24h_usd >= ?
         ORDER BY
             token_metrics.liquidity_usd DESC,
             token_metrics.volume_24h_usd DESC,
-            token_universe.symbol ASC
+            token_universe.symbol ASC,
+            token_universe.mint ASC
         LIMIT ?
         """,
         (
@@ -334,84 +381,12 @@ def get_liquid_tokens(
     return [dict(row) for row in rows]
 
 
-def get_scanner_tokens(
-    batch_size=20,
-    minimum_liquidity_usd=100_000,
-    minimum_volume_24h_usd=25_000,
-):
-    """
-    Return high-quality tokens in the format expected by the scanner.
-
-    Requirements:
-    - Token must be enabled.
-    - Token must have fewer than three failed scans.
-    - Token must have at least one active pair.
-    - Token must meet liquidity and volume thresholds.
-    - Highest-liquidity tokens are selected first.
-    """
-
-    initialize_token_metrics_table()
-
-    batch_size = max(1, int(batch_size))
-    minimum_liquidity_usd = max(
-        0.0,
-        float(minimum_liquidity_usd),
-    )
-    minimum_volume_24h_usd = max(
-        0.0,
-        float(minimum_volume_24h_usd),
-    )
-
-    connection = get_database_connection()
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        SELECT
-            token_universe.mint,
-            token_universe.symbol,
-            token_universe.name,
-            token_universe.decimals,
-            token_metrics.price_usd,
-            token_metrics.liquidity_usd,
-            token_metrics.volume_24h_usd,
-            token_metrics.pair_count,
-            token_metrics.best_pair_address,
-            token_metrics.best_dex,
-            token_metrics.metrics_updated_at
-        FROM token_universe
-        INNER JOIN token_metrics
-            ON token_universe.mint = token_metrics.mint
-        WHERE token_universe.enabled = 1
-          AND COALESCE(token_universe.failed_scans, 0) < 3
-          AND token_metrics.pair_count > 0
-          AND token_metrics.liquidity_usd >= ?
-          AND token_metrics.volume_24h_usd >= ?
-        ORDER BY
-            token_metrics.liquidity_usd DESC,
-            token_metrics.volume_24h_usd DESC,
-            token_universe.symbol ASC
-        LIMIT ?
-        """,
-        (
-            minimum_liquidity_usd,
-            minimum_volume_24h_usd,
-            batch_size,
-        ),
-    )
-
-    rows = cursor.fetchall()
-    connection.close()
-
-    return [dict(row) for row in rows]
-
-
 def count_scanner_tokens(
     minimum_liquidity_usd=100_000,
     minimum_volume_24h_usd=25_000,
 ):
     """
-    Count tokens currently eligible for scanner use.
+    Count tokens currently eligible for scanning.
     """
 
     initialize_token_metrics_table()
@@ -433,9 +408,13 @@ def count_scanner_tokens(
         SELECT COUNT(*) AS token_count
         FROM token_universe
         INNER JOIN token_metrics
-            ON token_universe.mint = token_metrics.mint
+            ON token_universe.mint =
+               token_metrics.mint
         WHERE token_universe.enabled = 1
-          AND COALESCE(token_universe.failed_scans, 0) < 3
+          AND COALESCE(
+                token_universe.failed_scans,
+                0
+              ) < 3
           AND token_metrics.pair_count > 0
           AND token_metrics.liquidity_usd >= ?
           AND token_metrics.volume_24h_usd >= ?
@@ -446,8 +425,289 @@ def count_scanner_tokens(
         ),
     )
 
-    token_count = cursor.fetchone()["token_count"]
+    token_count = cursor.fetchone()[
+        "token_count"
+    ]
 
     connection.close()
 
     return token_count
+
+
+def get_scanner_tokens(
+    batch_size=20,
+    minimum_liquidity_usd=100_000,
+    minimum_volume_24h_usd=25_000,
+):
+    """
+    Return the next rotating batch of filtered tokens.
+
+    The scanner position is stored in SQLite, so rotation
+    continues even after restarting the bot.
+    """
+
+    initialize_token_metrics_table()
+
+    batch_size = max(1, int(batch_size))
+    minimum_liquidity_usd = max(
+        0.0,
+        float(minimum_liquidity_usd),
+    )
+    minimum_volume_24h_usd = max(
+        0.0,
+        float(minimum_volume_24h_usd),
+    )
+
+    connection = get_database_connection()
+
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS token_count
+            FROM token_universe
+            INNER JOIN token_metrics
+                ON token_universe.mint =
+                   token_metrics.mint
+            WHERE token_universe.enabled = 1
+              AND COALESCE(
+                    token_universe.failed_scans,
+                    0
+                  ) < 3
+              AND token_metrics.pair_count > 0
+              AND token_metrics.liquidity_usd >= ?
+              AND token_metrics.volume_24h_usd >= ?
+            """,
+            (
+                minimum_liquidity_usd,
+                minimum_volume_24h_usd,
+            ),
+        )
+
+        total_eligible = cursor.fetchone()[
+            "token_count"
+        ]
+
+        if total_eligible <= 0:
+            cursor.execute(
+                """
+                UPDATE scanner_state
+                SET
+                    state_value = 0,
+                    updated_at = ?
+                WHERE state_key = ?
+                """,
+                (
+                    datetime.now().strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
+                    SCANNER_OFFSET_KEY,
+                ),
+            )
+
+            connection.commit()
+            return []
+
+        cursor.execute(
+            """
+            SELECT state_value
+            FROM scanner_state
+            WHERE state_key = ?
+            """,
+            (SCANNER_OFFSET_KEY,),
+        )
+
+        state_row = cursor.fetchone()
+
+        current_offset = (
+            int(state_row["state_value"])
+            if state_row
+            else 0
+        )
+
+        current_offset %= total_eligible
+
+        number_to_return = min(
+            batch_size,
+            total_eligible,
+        )
+
+        query = """
+            SELECT
+                token_universe.mint,
+                token_universe.symbol,
+                token_universe.name,
+                token_universe.decimals,
+                token_metrics.price_usd,
+                token_metrics.liquidity_usd,
+                token_metrics.volume_24h_usd,
+                token_metrics.pair_count,
+                token_metrics.best_pair_address,
+                token_metrics.best_dex,
+                token_metrics.metrics_updated_at
+            FROM token_universe
+            INNER JOIN token_metrics
+                ON token_universe.mint =
+                   token_metrics.mint
+            WHERE token_universe.enabled = 1
+              AND COALESCE(
+                    token_universe.failed_scans,
+                    0
+                  ) < 3
+              AND token_metrics.pair_count > 0
+              AND token_metrics.liquidity_usd >= ?
+              AND token_metrics.volume_24h_usd >= ?
+            ORDER BY
+                token_metrics.liquidity_usd DESC,
+                token_metrics.volume_24h_usd DESC,
+                token_universe.symbol ASC,
+                token_universe.mint ASC
+            LIMIT ?
+            OFFSET ?
+        """
+
+        cursor.execute(
+            query,
+            (
+                minimum_liquidity_usd,
+                minimum_volume_24h_usd,
+                number_to_return,
+                current_offset,
+            ),
+        )
+
+        rows = list(cursor.fetchall())
+
+        remaining_needed = (
+            number_to_return - len(rows)
+        )
+
+        if remaining_needed > 0:
+            cursor.execute(
+                query,
+                (
+                    minimum_liquidity_usd,
+                    minimum_volume_24h_usd,
+                    remaining_needed,
+                    0,
+                ),
+            )
+
+            rows.extend(cursor.fetchall())
+
+        next_offset = (
+            current_offset + len(rows)
+        ) % total_eligible
+
+        cursor.execute(
+            """
+            INSERT INTO scanner_state (
+                state_key,
+                state_value,
+                updated_at
+            )
+            VALUES (?, ?, ?)
+            ON CONFLICT(state_key) DO UPDATE SET
+                state_value = excluded.state_value,
+                updated_at = excluded.updated_at
+            """,
+            (
+                SCANNER_OFFSET_KEY,
+                next_offset,
+                datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+            ),
+        )
+
+        connection.commit()
+
+        return [dict(row) for row in rows]
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        connection.close()
+
+
+def get_scanner_rotation_status(
+    minimum_liquidity_usd=100_000,
+    minimum_volume_24h_usd=25_000,
+):
+    """
+    Return the scanner offset and eligible-token count.
+    """
+
+    initialize_token_metrics_table()
+
+    eligible_count = count_scanner_tokens(
+        minimum_liquidity_usd,
+        minimum_volume_24h_usd,
+    )
+
+    connection = get_database_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT state_value, updated_at
+        FROM scanner_state
+        WHERE state_key = ?
+        """,
+        (SCANNER_OFFSET_KEY,),
+    )
+
+    row = cursor.fetchone()
+    connection.close()
+
+    return {
+        "current_offset": (
+            int(row["state_value"])
+            if row
+            else 0
+        ),
+        "eligible_tokens": eligible_count,
+        "updated_at": (
+            row["updated_at"]
+            if row
+            else None
+        ),
+    }
+
+
+def reset_scanner_rotation():
+    """
+    Reset filtered scanner rotation to the first token.
+    """
+
+    initialize_token_metrics_table()
+
+    connection = get_database_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO scanner_state (
+            state_key,
+            state_value,
+            updated_at
+        )
+        VALUES (?, 0, ?)
+        ON CONFLICT(state_key) DO UPDATE SET
+            state_value = 0,
+            updated_at = excluded.updated_at
+        """,
+        (
+            SCANNER_OFFSET_KEY,
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+        ),
+    )
+
+    connection.commit()
+    connection.close()
