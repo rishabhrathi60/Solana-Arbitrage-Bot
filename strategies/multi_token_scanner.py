@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 from config import MIN_PROFIT_USD, TRADE_AMOUNT_USD
 from database.token_intelligence import (
     get_top_intelligent_tokens,
-    refresh_token_intelligence,
 )
+
 from database.token_metrics import (
     count_scanner_tokens,
     get_liquid_tokens,
@@ -639,14 +639,7 @@ def load_intelligent_scanner_tokens(
     if target_batch_size <= 0:
         return []
 
-    refresh_result = refresh_token_intelligence(
-        minimum_liquidity_usd=(
-            MINIMUM_LIQUIDITY_USD
-        ),
-        minimum_volume_24h_usd=(
-            MINIMUM_VOLUME_24H_USD
-        ),
-    )
+    
 
     intelligence_records = (
         get_top_intelligent_tokens(
@@ -909,11 +902,7 @@ def load_intelligent_scanner_tokens(
             ):
                 break
 
-    print("Token Intelligence Engine refreshed.")
-    print(
-        "Intelligence records saved: "
-        f"{refresh_result['intelligence_records_saved']:,}"
-    )
+   
     print(
         "Intelligence exploitation tokens: "
         f"{len(exploitation_tokens):,}"
