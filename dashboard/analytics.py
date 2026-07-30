@@ -8,14 +8,14 @@ from database.opportunity_history import (
 )
 
 
-RECENT_HISTORY_LIMIT = 500
+RECENT_HISTORY_LIMIT = 1000
+RECENT_TABLE_LIMIT = 100
 LEADERBOARD_LIMIT = 25
-MINIMUM_SCANS_FOR_RANKING = 2
-
+MINIMUM_SCANS_FOR_RANKING = 1
 
 def safe_float(value):
     """
-    Convert a value to float without raising an exception.
+    Convert a value to float safely.
     """
 
     try:
@@ -26,7 +26,7 @@ def safe_float(value):
 
 def safe_int(value):
     """
-    Convert a value to integer without raising an exception.
+    Convert a value to integer safely.
     """
 
     try:
@@ -35,9 +35,12 @@ def safe_int(value):
         return 0
 
 
-def calculate_percentage(numerator, denominator):
+def calculate_percentage(
+    numerator,
+    denominator,
+):
     """
-    Return a percentage while safely handling zero.
+    Calculate a percentage safely.
     """
 
     numerator = safe_float(numerator)
@@ -46,15 +49,17 @@ def calculate_percentage(numerator, denominator):
     if denominator <= 0:
         return 0.0
 
-    return numerator / denominator * 100
+    return (
+        numerator
+        / denominator
+        * 100
+    )
 
 
 def calculate_average_scan_interval(history):
     """
-    Estimate the average time between stored observations.
-
-    This value is based on recent historical rows and is only
-    shown when at least two distinct timestamps are available.
+    Estimate the average time between scanner
+    batches using distinct timestamps.
     """
 
     timestamps = {
@@ -80,9 +85,12 @@ def calculate_average_scan_interval(history):
     if len(parsed_timestamps) < 2:
         return None
 
-    differences = (
+    timestamp_series = pd.Series(
         parsed_timestamps
-        .to_series()
+    )
+
+    differences = (
+        timestamp_series
         .diff()
         .dropna()
     )
@@ -91,7 +99,9 @@ def calculate_average_scan_interval(history):
         return None
 
     average_seconds = (
-        differences.dt.total_seconds().mean()
+        differences
+        .dt.total_seconds()
+        .mean()
     )
 
     if pd.isna(average_seconds):
@@ -108,20 +118,28 @@ def format_duration(seconds):
     if seconds is None:
         return "Not enough data"
 
-    seconds = max(0, float(seconds))
+    seconds = max(
+        0,
+        float(seconds),
+    )
 
     if seconds < 60:
         return f"{seconds:.0f} sec"
 
     if seconds < 3600:
-        return f"{seconds / 60:.1f} min"
+        return (
+            f"{seconds / 60:.1f} min"
+        )
 
-    return f"{seconds / 3600:.1f} hr"
+    return (
+        f"{seconds / 3600:.1f} hr"
+    )
 
 
 def prepare_recent_history_table(history):
     """
-    Convert recent history into dashboard-friendly rows.
+    Convert recent observations into
+    dashboard-friendly rows.
     """
 
     rows = []
@@ -139,47 +157,75 @@ def prepare_recent_history_table(history):
                 ),
                 "Market Score": round(
                     safe_float(
-                        record.get("market_score")
+                        record.get(
+                            "market_score"
+                        )
                     ),
                     2,
                 ),
                 "Starting Amount": round(
                     safe_float(
-                        record.get("starting_amount")
+                        record.get(
+                            "starting_amount"
+                        )
                     ),
                     6,
                 ),
                 "Ending Amount": round(
                     safe_float(
-                        record.get("ending_amount")
+                        record.get(
+                            "ending_amount"
+                        )
                     ),
                     6,
                 ),
                 "Quoted Profit": round(
                     safe_float(
-                        record.get("quoted_profit")
+                        record.get(
+                            "quoted_profit"
+                        )
+                    ),
+                    6,
+                ),
+                "Estimated Cost": round(
+                    safe_float(
+                        record.get(
+                            "estimated_cost"
+                        )
                     ),
                     6,
                 ),
                 "Net Profit": round(
                     safe_float(
-                        record.get("net_profit")
+                        record.get(
+                            "net_profit"
+                        )
                     ),
                     6,
+                ),
+                "Eligible": (
+                    "Yes"
+                    if safe_int(
+                        record.get("eligible")
+                    )
+                    else "No"
+                ),
+                "Quote Successful": (
+                    "Yes"
+                    if safe_int(
+                        record.get(
+                            "quote_successful"
+                        )
+                    )
+                    else "No"
                 ),
                 "Decision": (
                     record.get("decision")
                     or "Unknown"
                 ),
-                "Quote Successful": (
-                    "Yes"
-                    if safe_int(
-                        record.get("quote_successful")
-                    )
-                    else "No"
-                ),
                 "Error": (
-                    record.get("error") or ""
+                    record.get("error")
+                    or ""
                 ),
             }
         )
@@ -189,31 +235,33 @@ def prepare_recent_history_table(history):
 
 def prepare_performance_table(performance):
     """
-    Convert aggregated token performance into table rows.
+    Convert token performance into
+    dashboard-friendly rows.
     """
 
     rows = []
 
     for record in performance:
-        successful_quotes = safe_int(
-            record.get("successful_quotes")
-        )
-        total_scans = safe_int(
-            record.get("total_scans")
-        )
-
         rows.append(
             {
                 "Token": (
                     record.get("token")
                     or "UNKNOWN"
                 ),
-                "Total Scans": total_scans,
-                "Successful Quotes": successful_quotes,
-                "Quote Errors": safe_int(
-                    record.get("quote_errors")
+                "Total Scans": safe_int(
+                    record.get("total_scans")
                 ),
-                "Quote Success Rate": round(
+                "Successful Quotes": safe_int(
+                    record.get(
+                        "successful_quotes"
+                    )
+                ),
+                "Quote Errors": safe_int(
+                    record.get(
+                        "quote_errors"
+                    )
+                ),
+                "Quote Success Rate %": round(
                     safe_float(
                         record.get(
                             "quote_success_rate"
@@ -221,10 +269,25 @@ def prepare_performance_table(performance):
                     ),
                     2,
                 ),
-                "Profitable Scans": safe_int(
-                    record.get("profitable_scans")
+                "Eligible Scans": safe_int(
+                    record.get(
+                        "eligible_scans"
+                    )
                 ),
-                "Profitable Scan Rate": round(
+                "Eligible Rate %": round(
+                    safe_float(
+                        record.get(
+                            "eligible_scan_rate"
+                        )
+                    ),
+                    2,
+                ),
+                "Profitable Scans": safe_int(
+                    record.get(
+                        "profitable_scans"
+                    )
+                ),
+                "Profitable Rate %": round(
                     safe_float(
                         record.get(
                             "profitable_scan_rate"
@@ -265,7 +328,9 @@ def prepare_performance_table(performance):
                     2,
                 ),
                 "Last Scanned": (
-                    record.get("last_scanned_at")
+                    record.get(
+                        "last_scanned_at"
+                    )
                     or "Unknown"
                 ),
             }
@@ -274,67 +339,179 @@ def prepare_performance_table(performance):
     return rows
 
 
-def render_history_charts(history):
+def build_scan_cycle_dataframe(history):
     """
-    Display opportunity-history charts.
+    Aggregate token observations into scanner
+    batches using the shared scanned_at timestamp.
     """
 
     if not history:
-        st.info(
-            "No historical scanner observations "
-            "are available yet."
-        )
-        return
+        return pd.DataFrame()
 
     dataframe = pd.DataFrame(history)
+
+    required_columns = (
+        "scanned_at",
+        "net_profit",
+        "market_score",
+        "quote_successful",
+        "eligible",
+    )
+
+    for column in required_columns:
+        if column not in dataframe.columns:
+            dataframe[column] = 0
 
     dataframe["scanned_at"] = pd.to_datetime(
         dataframe["scanned_at"],
         errors="coerce",
     )
 
-    dataframe["net_profit"] = pd.to_numeric(
-        dataframe["net_profit"],
-        errors="coerce",
-    ).fillna(0)
+    numeric_columns = (
+        "net_profit",
+        "market_score",
+        "quote_successful",
+        "eligible",
+    )
 
-    dataframe["market_score"] = pd.to_numeric(
-        dataframe["market_score"],
-        errors="coerce",
-    ).fillna(0)
+    for column in numeric_columns:
+        dataframe[column] = pd.to_numeric(
+            dataframe[column],
+            errors="coerce",
+        ).fillna(0)
 
     dataframe = dataframe.dropna(
         subset=["scanned_at"]
     )
 
     if dataframe.empty:
+        return dataframe
+
+    successful_rows = dataframe[
+        dataframe["quote_successful"] == 1
+    ].copy()
+
+    cycle_counts = (
+        dataframe
+        .groupby("scanned_at")
+        .agg(
+            Observations=(
+                "scanned_at",
+                "size",
+            ),
+            Successful_Quotes=(
+                "quote_successful",
+                "sum",
+            ),
+            Eligible_Opportunities=(
+                "eligible",
+                "sum",
+            ),
+        )
+    )
+
+    if successful_rows.empty:
+        cycle_counts[
+            "Average_Net_Profit"
+        ] = 0.0
+        cycle_counts[
+            "Best_Net_Profit"
+        ] = 0.0
+        cycle_counts[
+            "Average_Market_Score"
+        ] = 0.0
+
+        return (
+            cycle_counts
+            .reset_index()
+            .sort_values("scanned_at")
+        )
+
+    successful_summary = (
+        successful_rows
+        .groupby("scanned_at")
+        .agg(
+            Average_Net_Profit=(
+                "net_profit",
+                "mean",
+            ),
+            Best_Net_Profit=(
+                "net_profit",
+                "max",
+            ),
+            Average_Market_Score=(
+                "market_score",
+                "mean",
+            ),
+        )
+    )
+
+    combined = cycle_counts.join(
+        successful_summary,
+        how="left",
+    )
+
+    combined = combined.fillna(0)
+
+    return (
+        combined
+        .reset_index()
+        .sort_values("scanned_at")
+    )
+
+
+def render_history_charts(history):
+    """
+    Display scanner-batch historical charts.
+    """
+
+    cycle_dataframe = (
+        build_scan_cycle_dataframe(
+            history
+        )
+    )
+
+    if cycle_dataframe.empty:
         st.info(
-            "Historical timestamps could not "
-            "be converted for charting."
+            "No historical scanner observations "
+            "are available for charting."
         )
         return
 
-    dataframe = dataframe.sort_values(
-        "scanned_at"
-    )
-
-    chart_tab1, chart_tab2, chart_tab3 = st.tabs(
+    (
+        profit_tab,
+        score_tab,
+        activity_tab,
+        eligibility_tab,
+    ) = st.tabs(
         [
-            "Net Profit Over Time",
-            "Market Score Over Time",
-            "Observations by Hour",
+            "Profit by Scan",
+            "Market Score",
+            "Scanner Activity",
+            "Eligible Opportunities",
         ]
     )
 
-    with chart_tab1:
+    with profit_tab:
         profit_chart = (
-            dataframe[
+            cycle_dataframe[
                 [
                     "scanned_at",
-                    "net_profit",
+                    "Average_Net_Profit",
+                    "Best_Net_Profit",
                 ]
             ]
             .set_index("scanned_at")
+            .rename(
+                columns={
+                    "Average_Net_Profit": (
+                        "Average Net Profit"
+                    ),
+                    "Best_Net_Profit": (
+                        "Best Net Profit"
+                    ),
+                }
+            )
         )
 
         st.line_chart(
@@ -342,15 +519,22 @@ def render_history_charts(history):
             height=350,
         )
 
-    with chart_tab2:
+    with score_tab:
         score_chart = (
-            dataframe[
+            cycle_dataframe[
                 [
                     "scanned_at",
-                    "market_score",
+                    "Average_Market_Score",
                 ]
             ]
             .set_index("scanned_at")
+            .rename(
+                columns={
+                    "Average_Market_Score": (
+                        "Average Market Score"
+                    ),
+                }
+            )
         )
 
         st.line_chart(
@@ -358,24 +542,50 @@ def render_history_charts(history):
             height=350,
         )
 
-    with chart_tab3:
-        hourly_data = dataframe.copy()
-
-        hourly_data["hour"] = (
-            hourly_data["scanned_at"]
-            .dt.floor("h")
-        )
-
-        hourly_counts = (
-            hourly_data
-            .groupby("hour")
-            .size()
-            .rename("Observations")
-            .to_frame()
+    with activity_tab:
+        activity_chart = (
+            cycle_dataframe[
+                [
+                    "scanned_at",
+                    "Observations",
+                    "Successful_Quotes",
+                ]
+            ]
+            .set_index("scanned_at")
+            .rename(
+                columns={
+                    "Successful_Quotes": (
+                        "Successful Quotes"
+                    ),
+                }
+            )
         )
 
         st.bar_chart(
-            hourly_counts,
+            activity_chart,
+            height=350,
+        )
+
+    with eligibility_tab:
+        eligible_chart = (
+            cycle_dataframe[
+                [
+                    "scanned_at",
+                    "Eligible_Opportunities",
+                ]
+            ]
+            .set_index("scanned_at")
+            .rename(
+                columns={
+                    "Eligible_Opportunities": (
+                        "Eligible Opportunities"
+                    ),
+                }
+            )
+        )
+
+        st.bar_chart(
+            eligible_chart,
             height=350,
         )
 
@@ -385,17 +595,27 @@ def render_scanner_summary(
     recent_history,
 ):
     """
-    Display high-level historical scanner metrics.
+    Display high-level historical
+    scanner statistics.
     """
 
     total_observations = safe_int(
-        summary.get("total_observations")
+        summary.get(
+            "total_observations"
+        )
     )
     successful_quotes = safe_int(
-        summary.get("successful_quotes")
+        summary.get(
+            "successful_quotes"
+        )
     )
     quote_errors = safe_int(
         summary.get("quote_errors")
+    )
+    eligible_observations = safe_int(
+        summary.get(
+            "eligible_observations"
+        )
     )
     profitable_observations = safe_int(
         summary.get(
@@ -403,14 +623,25 @@ def render_scanner_summary(
         )
     )
 
-    quote_success_rate = calculate_percentage(
-        successful_quotes,
-        total_observations,
+    quote_success_rate = (
+        calculate_percentage(
+            successful_quotes,
+            total_observations,
+        )
     )
 
-    profitable_rate = calculate_percentage(
-        profitable_observations,
-        successful_quotes,
+    eligible_rate = (
+        calculate_percentage(
+            eligible_observations,
+            successful_quotes,
+        )
+    )
+
+    profitable_rate = (
+        calculate_percentage(
+            profitable_observations,
+            successful_quotes,
+        )
     )
 
     average_scan_interval = (
@@ -419,9 +650,12 @@ def render_scanner_summary(
         )
     )
 
-    row1_col1, row1_col2, row1_col3, row1_col4 = (
-        st.columns(4)
-    )
+    (
+        row1_col1,
+        row1_col2,
+        row1_col3,
+        row1_col4,
+    ) = st.columns(4)
 
     row1_col1.metric(
         label="Historical Observations",
@@ -429,52 +663,53 @@ def render_scanner_summary(
     )
 
     row1_col2.metric(
+        label="Scanner Cycles",
+        value=(
+            f"{safe_int(summary.get('scan_cycles')):,}"
+        ),
+    )
+
+    row1_col3.metric(
         label="Unique Tokens",
         value=(
             f"{safe_int(summary.get('unique_tokens')):,}"
         ),
     )
 
-    row1_col3.metric(
+    row1_col4.metric(
         label="Quote Success Rate",
         value=f"{quote_success_rate:.2f}%",
         help=(
-            f"{successful_quotes:,} successful quotes "
-            f"and {quote_errors:,} errors"
+            f"{successful_quotes:,} successful "
+            f"quotes and {quote_errors:,} errors."
         ),
     )
 
-    row1_col4.metric(
-        label="Profitable Observation Rate",
-        value=f"{profitable_rate:.2f}%",
-        help=(
-            "Profitable observations divided by "
-            "successful quotes."
-        ),
-    )
-
-    row2_col1, row2_col2, row2_col3, row2_col4 = (
-        st.columns(4)
-    )
+    (
+        row2_col1,
+        row2_col2,
+        row2_col3,
+        row2_col4,
+    ) = st.columns(4)
 
     row2_col1.metric(
-        label="Average Net Profit",
-        value=(
-            f"${safe_float(summary.get('average_net_profit')):.6f}"
-        ),
+        label="Eligible Opportunities",
+        value=f"{eligible_observations:,}",
+        delta=f"{eligible_rate:.2f}% of quotes",
+        delta_color="off",
     )
 
     row2_col2.metric(
-        label="Best Net Profit",
-        value=(
-            f"${safe_float(summary.get('best_net_profit')):.6f}"
-        ),
+        label="Profitable Observations",
+        value=f"{profitable_observations:,}",
+        delta=f"{profitable_rate:.2f}% of quotes",
+        delta_color="off",
     )
 
     row2_col3.metric(
-        label="Worst Net Profit",
+        label="Average Market Score",
         value=(
-            f"${safe_float(summary.get('worst_net_profit')):.6f}"
+            f"{safe_float(summary.get('average_market_score')):.2f}"
         ),
     )
 
@@ -485,28 +720,64 @@ def render_scanner_summary(
         ),
     )
 
+    (
+        row3_col1,
+        row3_col2,
+        row3_col3,
+    ) = st.columns(3)
+
+    row3_col1.metric(
+        label="Average Net Profit",
+        value=(
+            f"${safe_float(summary.get('average_net_profit')):.6f}"
+        ),
+    )
+
+    row3_col2.metric(
+        label="Best Net Profit",
+        value=(
+            f"${safe_float(summary.get('best_net_profit')):.6f}"
+        ),
+    )
+
+    row3_col3.metric(
+        label="Worst Net Profit",
+        value=(
+            f"${safe_float(summary.get('worst_net_profit')):.6f}"
+        ),
+    )
+
     st.caption(
         "Last historical observation: "
         f"{summary.get('last_scanned_at') or 'Not available'}"
     )
 
 
-def render_token_leaderboards(performance):
+def render_token_leaderboards(
+    performance,
+):
     """
-    Display token-performance leaderboards.
+    Display historical token leaderboards.
     """
 
     if not performance:
         st.info(
-            "Not enough historical token data is available "
-            "for performance rankings."
+            "Not enough historical token data "
+            "is available for rankings."
         )
         return
 
-    most_profitable = sorted(
+    highest_average_profit = sorted(
         performance,
-        key=lambda item: safe_float(
-            item.get("average_net_profit")
+        key=lambda item: (
+            safe_float(
+                item.get(
+                    "average_net_profit"
+                )
+            ),
+            safe_int(
+                item.get("total_scans")
+            ),
         ),
         reverse=True,
     )
@@ -515,10 +786,29 @@ def render_token_leaderboards(performance):
         performance,
         key=lambda item: (
             safe_float(
-                item.get("quote_success_rate")
+                item.get(
+                    "quote_success_rate"
+                )
             ),
             safe_int(
                 item.get("total_scans")
+            ),
+        ),
+        reverse=True,
+    )
+
+    most_eligible = sorted(
+        performance,
+        key=lambda item: (
+            safe_float(
+                item.get(
+                    "eligible_scan_rate"
+                )
+            ),
+            safe_int(
+                item.get(
+                    "eligible_scans"
+                )
             ),
         ),
         reverse=True,
@@ -532,22 +822,26 @@ def render_token_leaderboards(performance):
         reverse=True,
     )
 
-    worst_performers = sorted(
+    lowest_average_profit = sorted(
         performance,
         key=lambda item: safe_float(
-            item.get("average_net_profit")
+            item.get(
+                "average_net_profit"
+            )
         ),
     )
 
     (
         profit_tab,
         reliability_tab,
+        eligibility_tab,
         best_tab,
-        worst_tab,
+        lowest_tab,
     ) = st.tabs(
         [
             "Highest Average Profit",
             "Most Reliable",
+            "Most Frequently Eligible",
             "Best Single Result",
             "Lowest Average Profit",
         ]
@@ -556,7 +850,9 @@ def render_token_leaderboards(performance):
     with profit_tab:
         st.dataframe(
             prepare_performance_table(
-                most_profitable[:LEADERBOARD_LIMIT]
+                highest_average_profit[
+                    :LEADERBOARD_LIMIT
+                ]
             ),
             width="stretch",
             hide_index=True,
@@ -565,7 +861,20 @@ def render_token_leaderboards(performance):
     with reliability_tab:
         st.dataframe(
             prepare_performance_table(
-                most_reliable[:LEADERBOARD_LIMIT]
+                most_reliable[
+                    :LEADERBOARD_LIMIT
+                ]
+            ),
+            width="stretch",
+            hide_index=True,
+        )
+
+    with eligibility_tab:
+        st.dataframe(
+            prepare_performance_table(
+                most_eligible[
+                    :LEADERBOARD_LIMIT
+                ]
             ),
             width="stretch",
             hide_index=True,
@@ -582,10 +891,10 @@ def render_token_leaderboards(performance):
             hide_index=True,
         )
 
-    with worst_tab:
+    with lowest_tab:
         st.dataframe(
             prepare_performance_table(
-                worst_performers[
+                lowest_average_profit[
                     :LEADERBOARD_LIMIT
                 ]
             ),
@@ -596,7 +905,8 @@ def render_token_leaderboards(performance):
 
 def render_historical_analytics():
     """
-    Render the complete historical opportunity dashboard.
+    Render the complete historical
+    opportunity analytics section.
     """
 
     st.divider()
@@ -615,12 +925,22 @@ def render_historical_analytics():
             )
         )
 
-        performance = get_token_performance(
-            minimum_scans=(
-                MINIMUM_SCANS_FOR_RANKING
-            ),
-            limit=500,
+        performance = (
+            get_token_performance(
+                minimum_scans=(
+                    MINIMUM_SCANS_FOR_RANKING
+                ),
+                limit=500,
+            )
         )
+
+        if not recent_history:
+            st.info(
+                "No historical observations "
+                "have been stored yet. Keep the "
+                "automatic scanner running."
+            )
+            return
 
         render_scanner_summary(
             summary,
@@ -633,8 +953,8 @@ def render_historical_analytics():
 
         st.caption(
             "Rankings require at least "
-            f"{MINIMUM_SCANS_FOR_RANKING} scans "
-            "per token."
+            f"{MINIMUM_SCANS_FOR_RANKING} "
+            "historical observations per token."
         )
 
         render_token_leaderboards(
@@ -642,7 +962,7 @@ def render_historical_analytics():
         )
 
         st.markdown(
-            "### 📈 Opportunity History Charts"
+            "### 📈 Historical Scanner Charts"
         )
 
         render_history_charts(
@@ -655,21 +975,17 @@ def render_historical_analytics():
 
         recent_rows = (
             prepare_recent_history_table(
-                recent_history[:100]
+                recent_history[
+                    :RECENT_TABLE_LIMIT
+                ]
             )
         )
 
-        if recent_rows:
-            st.dataframe(
-                recent_rows,
-                width="stretch",
-                hide_index=True,
-            )
-        else:
-            st.info(
-                "No historical observations "
-                "have been stored yet."
-            )
+        st.dataframe(
+            recent_rows,
+            width="stretch",
+            hide_index=True,
+        )
 
     except Exception as error:
         st.error(
