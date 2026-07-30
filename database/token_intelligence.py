@@ -33,7 +33,7 @@ DOWNSIDE_SAFETY_WEIGHT = 0.10
 CONFIDENCE_FULL_STRENGTH_SCANS = 30
 
 # New and under-tested tokens receive an exploration bonus.
-MAXIMUM_EXPLORATION_BONUS = 12.0
+MAXIMUM_EXPLORATION_BONUS = 7.5
 EXPLORATION_DECAY_SCANS = 20
 
 # Historical profit normalization.
@@ -617,9 +617,24 @@ def calculate_token_intelligence(
         * confidence_ratio
     )
 
+    # Prevent new or lightly tested tokens from saturating at 100.
+    #
+    # The exploitation score is slightly discounted, then the
+    # exploration bonus is added. The maximum allowed score rises
+    # gradually with confidence:
+    #
+    # - 0 confidence: maximum 90
+    # - 50 confidence: maximum 95
+    # - 100 confidence: maximum 100
+    maximum_allowed_score = (
+        90.0
+        + confidence_score * 0.10
+    )
+
     intelligence_score = clamp(
-        exploitation_score
-        + exploration_bonus
+        exploitation_score * 0.90
+        + exploration_bonus,
+        maximum=maximum_allowed_score,
     )
 
     return {
