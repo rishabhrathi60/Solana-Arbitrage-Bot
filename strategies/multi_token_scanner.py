@@ -1,6 +1,8 @@
+import os
 import time
 
 import requests
+from dotenv import load_dotenv
 
 from config import MIN_PROFIT_USD, TRADE_AMOUNT_USD
 from database.token_universe import (
@@ -14,7 +16,14 @@ from strategies.arbitrage import (
     USDC_MINT,
     get_route_name,
 )
+load_dotenv()
 
+JUPITER_API_KEY = os.getenv("JUPITER_API_KEY")
+
+if not JUPITER_API_KEY:
+    raise RuntimeError(
+        "JUPITER_API_KEY is missing from the .env file."
+    )
 
 SESSION = requests.Session()
 
@@ -39,10 +48,13 @@ def get_quote(input_mint, output_mint, amount):
 
     for attempt in range(MAXIMUM_QUOTE_ATTEMPTS):
         response = SESSION.get(
-            JUPITER_QUOTE_URL,
-            params=settings,
-            timeout=20,
-        )
+    JUPITER_QUOTE_URL,
+    headers={
+        "x-api-key": JUPITER_API_KEY,
+    },
+    params=settings,
+    timeout=20,
+)
 
         if response.status_code == 429:
             retry_after = response.headers.get("Retry-After")
@@ -191,14 +203,25 @@ def scan_all_tokens():
         "from the database."
     )
 
-    for token in tokens:
+    for position, token in enumerate(tokens, start=1):
         symbol = token.get("symbol") or "UNKNOWN"
         token_mint = token.get("mint")
+
+        print(
+            f"\nScanning {position}/{len(tokens)}: "
+            f"{symbol}"
+        )
 
         try:
             result = scan_one_token(
                 symbol,
                 token_mint,
+            )
+
+            print(
+                f"{symbol}: net profit "
+                f"${result['net_profit']:.6f} "
+                f"{result['decision']}"
             )
 
         except (
@@ -253,5 +276,22 @@ def scan_all_tokens():
         ),
         reverse=True,
     )
+
+    successful_count = sum(
+        result["decision"] != "⚠️ QUOTE ERROR"
+        for result in results
+    )
+
+    failed_count = len(results) - successful_count
+
+    eligible_count = sum(
+        result["eligible"]
+        for result in results
+    )
+
+    print("\nBatch scan completed.")
+    print(f"Successful quotes: {successful_count}")
+    print(f"Quote errors: {failed_count}")
+    print(f"Eligible opportunities: {eligible_count}")
 
     return results

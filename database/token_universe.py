@@ -7,6 +7,10 @@ DATABASE = Path(__file__).resolve().parent / "trades.db"
 
 
 def initialize_token_table():
+    """
+    Create the token-universe table if it does not exist.
+    """
+
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
@@ -30,6 +34,10 @@ def initialize_token_table():
 
 
 def save_tokens(tokens):
+    """
+    Save newly downloaded tokens without deleting scan history.
+    """
+
     initialize_token_table()
 
     conn = sqlite3.connect(DATABASE)
@@ -38,13 +46,17 @@ def save_tokens(tokens):
     for token in tokens:
         cursor.execute(
             """
-            INSERT OR IGNORE INTO token_universe (
+            INSERT INTO token_universe (
                 mint,
                 symbol,
                 name,
                 decimals
             )
             VALUES (?, ?, ?, ?)
+            ON CONFLICT(mint) DO UPDATE SET
+                symbol = excluded.symbol,
+                name = excluded.name,
+                decimals = excluded.decimals
             """,
             (
                 token["mint"],
@@ -59,6 +71,10 @@ def save_tokens(tokens):
 
 
 def get_enabled_tokens():
+    """
+    Return all enabled tokens.
+    """
+
     initialize_token_table()
 
     conn = sqlite3.connect(DATABASE)
@@ -85,8 +101,13 @@ def get_token_batch(batch_size=20):
     Return a rotating batch of enabled tokens.
 
     Tokens scanned least recently are returned first.
-    Tokens with three or more failed scans are skipped.
+    Tokens with three or more failed scans are excluded.
     """
+
+    if not isinstance(batch_size, int) or batch_size <= 0:
+        raise ValueError(
+            "batch_size must be a positive integer."
+        )
 
     initialize_token_table()
 
@@ -121,15 +142,25 @@ def get_token_batch(batch_size=20):
 
 def mark_token_scanned(mint, successful):
     """
-    Update a token's scan time and success/failure counter.
+    Update scan history for one token.
+
+    A failed scan increases failed_scans. The token is
+    automatically disabled after its third failed scan.
     """
+
+    if not mint:
+        raise ValueError(
+            "A token mint is required."
+        )
 
     initialize_token_table()
 
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
-    scanned_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    scanned_at = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
     if successful:
         cursor.execute(
@@ -151,7 +182,11 @@ def mark_token_scanned(mint, successful):
             UPDATE token_universe
             SET
                 last_scan = ?,
-                failed_scans = failed_scans + 1
+                failed_scans = failed_scans + 1,
+                enabled = CASE
+                    WHEN failed_scans + 1 >= 3 THEN 0
+                    ELSE enabled
+                END
             WHERE mint = ?
             """,
             (
@@ -160,5 +195,53 @@ def mark_token_scanned(mint, successful):
             ),
         )
 
+    if cursor.rowcount == 0:
+        conn.close()
+        raise ValueError(
+            f"Token mint was not found: {mint}"
+        )
+
     conn.commit()
     conn.close()
+
+
+def get_disabled_tokens(limit=20):
+    """
+    Return tokens automatically disabled after failures.
+    """
+
+    if not isinstance(limit, int) or limit <= 0:
+        raise ValueError(
+            "limit must be a positive integer."
+        )
+
+    initialize_token_table()
+
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            mint,
+            symbol,
+            name,
+            failed_scans,
+            successful_scans,
+            last_scan,
+            enabled
+        FROM token_universe
+        WHERE enabled = 0
+        ORDER BY
+            failed_scans DESC,
+            last_scan DESC
+        LIMIT ?
+        """,
+        (limit,),
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
