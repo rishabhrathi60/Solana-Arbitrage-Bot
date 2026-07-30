@@ -10,8 +10,13 @@ import requests
 from dotenv import load_dotenv
 
 from config import MIN_PROFIT_USD, TRADE_AMOUNT_USD
+from database.token_intelligence import (
+    get_top_intelligent_tokens,
+    refresh_token_intelligence,
+)
 from database.token_metrics import (
     count_scanner_tokens,
+    get_liquid_tokens,
     get_scanner_tokens,
 )
 from database.token_universe import (
@@ -50,7 +55,21 @@ USE_MARKET_FILTER = True
 
 MINIMUM_LIQUIDITY_USD = 50_000
 MINIMUM_VOLUME_24H_USD = 10_000
+# ---------------------------------------------------------
+# Token Intelligence Engine
+# ---------------------------------------------------------
 
+USE_TOKEN_INTELLIGENCE = True
+
+# 80% of each scanner batch comes from the highest-ranked
+# intelligence results. The remaining 20% comes from the
+# persistent market rotation so new opportunities can still
+# be discovered.
+INTELLIGENCE_EXPLOITATION_RATIO = 0.80
+
+# Maximum eligible tokens loaded while building the intelligent
+# scanner candidate pool.
+INTELLIGENCE_CANDIDATE_LIMIT = 20_000
 
 # ---------------------------------------------------------
 # Adaptive scanner rules
@@ -519,14 +538,405 @@ def remove_usdc_and_duplicates(tokens):
         cleaned_tokens.append(token)
 
     return cleaned_tokens
+def add_intelligence_to_token(
+    token,
+    intelligence_by_mint,
+):
+    """
+    Attach stored intelligence information to a market token.
+    """
 
+    enriched_token = dict(token)
+
+    mint = enriched_token.get("mint")
+
+    intelligence = (
+        intelligence_by_mint.get(mint)
+        or {}
+    )
+
+    enriched_token.update(
+        {
+            "intelligence_score": float(
+                intelligence.get(
+                    "intelligence_score"
+                )
+                or enriched_token.get(
+                    "market_score"
+                )
+                or 0
+            ),
+            "exploitation_score": float(
+                intelligence.get(
+                    "exploitation_score"
+                )
+                or 0
+            ),
+            "exploration_bonus": float(
+                intelligence.get(
+                    "exploration_bonus"
+                )
+                or 0
+            ),
+            "confidence_score": float(
+                intelligence.get(
+                    "confidence_score"
+                )
+                or 0
+            ),
+            "historical_total_scans": int(
+                intelligence.get(
+                    "total_scans"
+                )
+                or 0
+            ),
+            "historical_quote_success_rate": float(
+                intelligence.get(
+                    "quote_success_rate"
+                )
+                or 0
+            ),
+            "historical_eligible_rate": float(
+                intelligence.get(
+                    "eligible_scan_rate"
+                )
+                or 0
+            ),
+            "historical_average_net_profit": float(
+                intelligence.get(
+                    "average_net_profit"
+                )
+                or 0
+            ),
+            "scanner_selection_type": (
+                "unassigned"
+            ),
+        }
+    )
+
+    return enriched_token
+
+
+def load_intelligent_scanner_tokens(
+    target_batch_size,
+):
+    """
+    Build an adaptive intelligence-driven scanner batch.
+
+    Selection:
+    - 80% highest intelligence scores.
+    - 20% persistent exploration rotation.
+
+    The exploration group prevents the engine from permanently
+    ignoring new or historically under-tested tokens.
+    """
+
+    target_batch_size = max(
+        0,
+        int(target_batch_size),
+    )
+
+    if target_batch_size <= 0:
+        return []
+
+    refresh_result = refresh_token_intelligence(
+        minimum_liquidity_usd=(
+            MINIMUM_LIQUIDITY_USD
+        ),
+        minimum_volume_24h_usd=(
+            MINIMUM_VOLUME_24H_USD
+        ),
+    )
+
+    intelligence_records = (
+        get_top_intelligent_tokens(
+            limit=INTELLIGENCE_CANDIDATE_LIMIT,
+            minimum_confidence=0,
+        )
+    )
+
+    intelligence_by_mint = {
+        record["mint"]: record
+        for record in intelligence_records
+        if record.get("mint")
+    }
+
+    market_tokens = get_liquid_tokens(
+        minimum_liquidity_usd=(
+            MINIMUM_LIQUIDITY_USD
+        ),
+        minimum_volume_24h_usd=(
+            MINIMUM_VOLUME_24H_USD
+        ),
+        limit=INTELLIGENCE_CANDIDATE_LIMIT,
+    )
+
+    market_tokens = remove_usdc_and_duplicates(
+        market_tokens
+    )
+
+    enriched_tokens = [
+        add_intelligence_to_token(
+            token,
+            intelligence_by_mint,
+        )
+        for token in market_tokens
+    ]
+
+    enriched_tokens.sort(
+        key=lambda token: (
+            float(
+                token.get(
+                    "intelligence_score"
+                )
+                or 0
+            ),
+            float(
+                token.get(
+                    "exploitation_score"
+                )
+                or 0
+            ),
+            float(
+                token.get(
+                    "confidence_score"
+                )
+                or 0
+            ),
+            float(
+                token.get("market_score")
+                or 0
+            ),
+        ),
+        reverse=True,
+    )
+
+    number_to_return = min(
+        target_batch_size,
+        len(enriched_tokens),
+    )
+
+    if number_to_return <= 0:
+        return []
+
+    exploitation_count = int(
+        round(
+            number_to_return
+            * INTELLIGENCE_EXPLOITATION_RATIO
+        )
+    )
+
+    exploitation_count = max(
+        1,
+        min(
+            exploitation_count,
+            number_to_return,
+        ),
+    )
+
+    exploration_count = (
+        number_to_return
+        - exploitation_count
+    )
+
+    exploitation_tokens = []
+
+    for token in enriched_tokens[
+        :exploitation_count
+    ]:
+        selected_token = dict(token)
+        selected_token[
+            "scanner_selection_type"
+        ] = "intelligence"
+
+        exploitation_tokens.append(
+            selected_token
+        )
+
+    selected_mints = {
+        token.get("mint")
+        for token in exploitation_tokens
+        if token.get("mint")
+    }
+
+    exploration_tokens = []
+
+    if exploration_count > 0:
+        # Request more than strictly needed because some rotating
+        # tokens may already appear in the exploitation group.
+        exploration_request_size = min(
+            max(
+                exploration_count * 4,
+                exploration_count,
+            ),
+            max(
+                len(enriched_tokens),
+                exploration_count,
+            ),
+        )
+
+        rotating_tokens = get_scanner_tokens(
+            batch_size=exploration_request_size,
+            minimum_liquidity_usd=(
+                MINIMUM_LIQUIDITY_USD
+            ),
+            minimum_volume_24h_usd=(
+                MINIMUM_VOLUME_24H_USD
+            ),
+        )
+
+        rotating_tokens = remove_usdc_and_duplicates(
+            rotating_tokens
+        )
+
+        for token in rotating_tokens:
+            mint = token.get("mint")
+
+            if not mint:
+                continue
+
+            if mint in selected_mints:
+                continue
+
+            enriched_token = (
+                add_intelligence_to_token(
+                    token,
+                    intelligence_by_mint,
+                )
+            )
+
+            enriched_token[
+                "scanner_selection_type"
+            ] = "exploration"
+
+            exploration_tokens.append(
+                enriched_token
+            )
+
+            selected_mints.add(mint)
+
+            if (
+                len(exploration_tokens)
+                >= exploration_count
+            ):
+                break
+
+    # If persistent rotation did not provide enough unique tokens,
+    # fill the remaining exploration positions with the most
+    # under-tested candidates.
+    missing_exploration = (
+        exploration_count
+        - len(exploration_tokens)
+    )
+
+    if missing_exploration > 0:
+        exploration_candidates = [
+            token
+            for token in enriched_tokens
+            if token.get("mint")
+            not in selected_mints
+        ]
+
+        exploration_candidates.sort(
+            key=lambda token: (
+                int(
+                    token.get(
+                        "historical_total_scans"
+                    )
+                    or 0
+                ),
+                -float(
+                    token.get(
+                        "exploration_bonus"
+                    )
+                    or 0
+                ),
+                -float(
+                    token.get("market_score")
+                    or 0
+                ),
+            )
+        )
+
+        for token in exploration_candidates[
+            :missing_exploration
+        ]:
+            selected_token = dict(token)
+            selected_token[
+                "scanner_selection_type"
+            ] = "exploration"
+
+            exploration_tokens.append(
+                selected_token
+            )
+
+            mint = selected_token.get("mint")
+
+            if mint:
+                selected_mints.add(mint)
+
+    selected_tokens = (
+        exploitation_tokens
+        + exploration_tokens
+    )
+
+    # Final safety fill in case the eligible pool is smaller or
+    # duplicate records reduced the selected batch.
+    if len(selected_tokens) < number_to_return:
+        for token in enriched_tokens:
+            mint = token.get("mint")
+
+            if not mint:
+                continue
+
+            if mint in selected_mints:
+                continue
+
+            selected_token = dict(token)
+            selected_token[
+                "scanner_selection_type"
+            ] = "intelligence-fill"
+
+            selected_tokens.append(
+                selected_token
+            )
+
+            selected_mints.add(mint)
+
+            if (
+                len(selected_tokens)
+                >= number_to_return
+            ):
+                break
+
+    print("Token Intelligence Engine refreshed.")
+    print(
+        "Intelligence records saved: "
+        f"{refresh_result['intelligence_records_saved']:,}"
+    )
+    print(
+        "Intelligence exploitation tokens: "
+        f"{len(exploitation_tokens):,}"
+    )
+    print(
+        "Exploration rotation tokens: "
+        f"{len(exploration_tokens):,}"
+    )
+
+    return selected_tokens[
+        :number_to_return
+    ]
 
 def load_adaptive_scanner_tokens():
     """
-    Load an adaptive smart-ranked scanner batch.
+    Load an adaptive intelligence-driven scanner batch.
 
-    If USDC appears in a batch, additional tokens are requested
-    so the useful scanner batch does not become smaller.
+    When intelligence is enabled:
+    - 80% comes from the highest intelligence rankings.
+    - 20% comes from persistent exploration rotation.
+
+    When intelligence is disabled, the original smart market
+    rotation remains available as a safe fallback.
     """
 
     eligible_count = count_scanner_tokens(
@@ -538,12 +948,25 @@ def load_adaptive_scanner_tokens():
         ),
     )
 
-    target_batch_size = calculate_adaptive_batch_size(
-        eligible_count
+    target_batch_size = (
+        calculate_adaptive_batch_size(
+            eligible_count
+        )
     )
 
     if target_batch_size <= 0:
         return [], eligible_count, 0
+
+    if USE_TOKEN_INTELLIGENCE:
+        tokens = load_intelligent_scanner_tokens(
+            target_batch_size
+        )
+
+        return (
+            tokens[:target_batch_size],
+            eligible_count,
+            target_batch_size,
+        )
 
     tokens = get_scanner_tokens(
         batch_size=target_batch_size,
@@ -555,20 +978,24 @@ def load_adaptive_scanner_tokens():
         ),
     )
 
-    tokens = remove_usdc_and_duplicates(tokens)
+    tokens = remove_usdc_and_duplicates(
+        tokens
+    )
 
     refill_attempts = 0
     maximum_refill_attempts = 3
 
     while (
         len(tokens) < target_batch_size
-        and refill_attempts < maximum_refill_attempts
+        and refill_attempts
+        < maximum_refill_attempts
         and eligible_count > len(tokens)
     ):
         refill_attempts += 1
 
         missing_count = (
-            target_batch_size - len(tokens)
+            target_batch_size
+            - len(tokens)
         )
 
         extra_tokens = get_scanner_tokens(
@@ -581,8 +1008,10 @@ def load_adaptive_scanner_tokens():
             ),
         )
 
-        updated_tokens = remove_usdc_and_duplicates(
-            tokens + extra_tokens
+        updated_tokens = (
+            remove_usdc_and_duplicates(
+                tokens + extra_tokens
+            )
         )
 
         if len(updated_tokens) == len(tokens):
@@ -595,7 +1024,6 @@ def load_adaptive_scanner_tokens():
         eligible_count,
         target_batch_size,
     )
-
 
 def load_scanner_tokens():
     """
@@ -612,7 +1040,19 @@ def load_scanner_tokens():
         print("Market filter enabled.")
         print("Smart market scoring enabled.")
         print("Adaptive batch sizing enabled.")
+        print(
+            "Token intelligence ranking: "
+            f"{'enabled' if USE_TOKEN_INTELLIGENCE else 'disabled'}"
+        )
 
+        if USE_TOKEN_INTELLIGENCE:
+            print(
+                "Intelligence selection mix: "
+                f"{INTELLIGENCE_EXPLOITATION_RATIO * 100:.0f}% "
+                "exploitation / "
+                f"{(1 - INTELLIGENCE_EXPLOITATION_RATIO) * 100:.0f}% "
+                "exploration"
+            )
         print(
             f"Minimum liquidity: "
             f"${MINIMUM_LIQUIDITY_USD:,.0f}"
@@ -654,7 +1094,56 @@ def print_token_market_details(token):
     """
     Display stored market metrics and smart scores.
     """
+    intelligence_score = float(
+        token.get("intelligence_score")
+        or token.get("market_score")
+        or 0
+    )
+    exploitation_score = float(
+        token.get("exploitation_score")
+        or 0
+    )
+    exploration_bonus = float(
+        token.get("exploration_bonus")
+        or 0
+    )
+    confidence_score = float(
+        token.get("confidence_score")
+        or 0
+    )
+    historical_scans = int(
+        token.get("historical_total_scans")
+        or 0
+    )
+    selection_type = (
+        token.get("scanner_selection_type")
+        or "market rotation"
+    )
 
+    print(
+        f"  Intelligence score: "
+        f"{intelligence_score:.2f}/100"
+    )
+    print(
+        f"  Confidence: "
+        f"{confidence_score:.2f}/100"
+    )
+    print(
+        f"  Exploitation score: "
+        f"{exploitation_score:.2f}/100"
+    )
+    print(
+        f"  Exploration bonus: "
+        f"{exploration_bonus:.2f}"
+    )
+    print(
+        f"  Historical scans: "
+        f"{historical_scans}"
+    )
+    print(
+        f"  Selection type: "
+        f"{selection_type}"
+    )
     market_score = float(
         token.get("market_score") or 0
     )
