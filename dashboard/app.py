@@ -21,6 +21,9 @@ from config import (  # noqa: E402
     MIN_PROFIT_USD,
     TRADE_AMOUNT_USD,
 )
+from dashboard.analytics import (  # noqa: E402
+    render_historical_analytics,
+)
 from database.scanner_results import (  # noqa: E402
     get_latest_scanner_results,
 )
@@ -272,19 +275,17 @@ try:
         ),
     )
 
-    metrics_summary = (
-        get_metrics_database_summary()
-    )
+    metrics_summary = get_metrics_database_summary()
 
-    total_enabled = (
-        metrics_progress["total_enabled"]
-    )
-    tokens_with_metrics = (
-        metrics_progress["tokens_with_metrics"]
-    )
-    tokens_remaining = (
-        metrics_progress["tokens_remaining"]
-    )
+    total_enabled = metrics_progress[
+        "total_enabled"
+    ]
+    tokens_with_metrics = metrics_progress[
+        "tokens_with_metrics"
+    ]
+    tokens_remaining = metrics_progress[
+        "tokens_remaining"
+    ]
 
     coverage_percentage = (
         tokens_with_metrics
@@ -294,9 +295,12 @@ try:
         else 0.0
     )
 
-    market_stat1, market_stat2, market_stat3, market_stat4 = (
-        st.columns(4)
-    )
+    (
+        market_stat1,
+        market_stat2,
+        market_stat3,
+        market_stat4,
+    ) = st.columns(4)
 
     market_stat1.metric(
         label="Metrics Coverage",
@@ -310,9 +314,7 @@ try:
     market_stat2.metric(
         label="Tokens With Metrics",
         value=f"{tokens_with_metrics:,}",
-        delta=(
-            f"{tokens_remaining:,} remaining"
-        ),
+        delta=f"{tokens_remaining:,} remaining",
         delta_color="off",
     )
 
@@ -325,9 +327,9 @@ try:
         ),
     )
 
-    current_offset = (
-        rotation_status["current_offset"]
-    )
+    current_offset = rotation_status[
+        "current_offset"
+    ]
 
     market_stat4.metric(
         label="Scanner Rotation Position",
@@ -347,7 +349,9 @@ try:
 
     detail1.metric(
         label="Tokens With Active Pairs",
-        value=f"{metrics_summary['tokens_with_pairs']:,}",
+        value=(
+            f"{metrics_summary['tokens_with_pairs']:,}"
+        ),
     )
 
     detail2.metric(
@@ -555,6 +559,10 @@ try:
         display_rows.append(
             {
                 "Token": trade["token"],
+                "Market Score": round(
+                    trade.get("market_score", 0),
+                    2,
+                ),
                 "Buy Route": trade["buy_route"],
                 "Sell Route": trade["sell_route"],
                 "Starting Amount": round(
@@ -594,7 +602,9 @@ try:
 
         best_scan = scanner_results[0]
 
-        scanner_col1, scanner_col2 = st.columns(2)
+        scanner_col1, scanner_col2 = (
+            st.columns(2)
+        )
 
         with scanner_col1:
             st.write(
@@ -605,6 +615,11 @@ try:
             st.write(
                 f"**Scanner decision:** "
                 f"{best_scan['decision']}"
+            )
+
+            st.write(
+                f"**Market score:** "
+                f"{best_scan.get('market_score', 0):.2f}"
             )
 
         with scanner_col2:
@@ -637,6 +652,12 @@ except Exception as error:
         "scanner database."
     )
     st.code(str(error))
+
+
+# -----------------------------
+# Historical analytics
+# -----------------------------
+render_historical_analytics()
 
 
 # -----------------------------
@@ -703,7 +724,13 @@ with left_column:
     )
     st.write("Multi-token scanner: **Enabled**")
     st.write("Market-quality filter: **Enabled**")
-    st.write("Persistent scanner rotation: **Enabled**")
+    st.write(
+        "Persistent scanner rotation: **Enabled**"
+    )
+    st.write(
+        "Historical opportunity tracking: **Enabled**"
+    )
+    st.write("Parallel scanner: **Enabled**")
     st.write("Paper trading: **Enabled**")
 
     if LIVE_TRADING:
