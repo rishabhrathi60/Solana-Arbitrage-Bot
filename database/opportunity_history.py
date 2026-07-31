@@ -11,8 +11,7 @@ DATABASE_FILE = (
 
 def get_database_connection():
     """
-    Create a SQLite connection that returns
-    dictionary-like rows.
+    Create a SQLite connection that returns dictionary-like rows.
     """
 
     connection = sqlite3.connect(
@@ -34,10 +33,35 @@ def current_timestamp():
     )
 
 
+def safe_float(value):
+    """
+    Convert a value to float safely.
+    """
+
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _get_table_columns(cursor, table_name):
+    """
+    Return the existing columns for one SQLite table.
+    """
+
+    cursor.execute(
+        f"PRAGMA table_info({table_name})"
+    )
+
+    return {
+        row[1]
+        for row in cursor.fetchall()
+    }
+
+
 def create_opportunity_history_table():
     """
-    Create the permanent scanner-history table
-    and supporting indexes.
+    Create and migrate the permanent scanner-history table.
     """
 
     connection = get_database_connection()
@@ -49,6 +73,7 @@ def create_opportunity_history_table():
             CREATE TABLE IF NOT EXISTS
             opportunity_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                mint TEXT,
                 token TEXT NOT NULL,
                 buy_route TEXT,
                 sell_route TEXT,
@@ -62,11 +87,46 @@ def create_opportunity_history_table():
                 quote_successful INTEGER NOT NULL DEFAULT 0,
                 error TEXT,
                 market_score REAL NOT NULL DEFAULT 0,
+                intelligence_score REAL NOT NULL DEFAULT 0,
                 liquidity_score REAL NOT NULL DEFAULT 0,
                 volume_score REAL NOT NULL DEFAULT 0,
                 pair_score REAL NOT NULL DEFAULT 0,
                 scanned_at TEXT NOT NULL
             )
+            """
+        )
+
+        existing_columns = _get_table_columns(
+            cursor,
+            "opportunity_history",
+        )
+
+        migrations = {
+            "mint": "TEXT",
+            "intelligence_score": (
+                "REAL NOT NULL DEFAULT 0"
+            ),
+        }
+
+        for column_name, column_definition in (
+            migrations.items()
+        ):
+            if column_name in existing_columns:
+                continue
+
+            cursor.execute(
+                f"""
+                ALTER TABLE opportunity_history
+                ADD COLUMN {column_name}
+                {column_definition}
+                """
+            )
+
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_opportunity_history_mint
+            ON opportunity_history(mint)
             """
         )
 
@@ -116,21 +176,9 @@ def create_opportunity_history_table():
         connection.close()
 
 
-def safe_float(value):
-    """
-    Convert a value to float safely.
-    """
-
-    try:
-        return float(value or 0)
-    except (TypeError, ValueError):
-        return 0.0
-
-
 def determine_quote_success(result):
     """
-    Determine whether the scanner successfully
-    received and processed a quote.
+    Determine whether the scanner successfully received a quote.
     """
 
     if "quote_successful" in result:
@@ -157,20 +205,17 @@ def determine_quote_success(result):
         "NO QUOTE",
     )
 
-    for indicator in quote_error_indicators:
-        if indicator in decision:
-            return 0
-
-    return 1
+    return int(
+        not any(
+            indicator in decision
+            for indicator in quote_error_indicators
+        )
+    )
 
 
 def save_opportunity_history(results):
     """
     Permanently save every scanner result.
-
-    Rows in this table are never replaced.
-    Every scanner batch creates new historical
-    observations.
     """
 
     create_opportunity_history_table()
@@ -216,6 +261,7 @@ def save_opportunity_history(results):
             cursor.execute(
                 """
                 INSERT INTO opportunity_history (
+                    mint,
                     token,
                     buy_route,
                     sell_route,
@@ -229,19 +275,26 @@ def save_opportunity_history(results):
                     quote_successful,
                     error,
                     market_score,
+                    intelligence_score,
                     liquidity_score,
                     volume_score,
                     pair_score,
                     scanned_at
                 )
                 VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 (
                     str(
+                        result.get("mint")
+                        or result.get("token_mint")
+                        or ""
+                    ).strip() or None,
+                    str(
                         result.get("token")
+                        or result.get("symbol")
                         or "UNKNOWN"
                     ),
                     str(
@@ -253,24 +306,16 @@ def save_opportunity_history(results):
                         or "Unavailable"
                     ),
                     safe_float(
-                        result.get(
-                            "starting_amount"
-                        )
+                        result.get("starting_amount")
                     ),
                     safe_float(
-                        result.get(
-                            "ending_amount"
-                        )
+                        result.get("ending_amount")
                     ),
                     safe_float(
-                        result.get(
-                            "quoted_profit"
-                        )
+                        result.get("quoted_profit")
                     ),
                     safe_float(
-                        result.get(
-                            "estimated_cost"
-                        )
+                        result.get("estimated_cost")
                     ),
                     safe_float(
                         result.get("net_profit")
@@ -284,8 +329,11 @@ def save_opportunity_history(results):
                     ),
                     safe_float(
                         result.get(
-                            "liquidity_score"
+                            "intelligence_score"
                         )
+                    ),
+                    safe_float(
+                        result.get("liquidity_score")
                     ),
                     safe_float(
                         result.get("volume_score")
@@ -313,8 +361,7 @@ def save_opportunity_history(results):
 
 def get_recent_opportunity_history(limit=100):
     """
-    Return the most recent historical
-    scanner observations.
+    Return the most recent historical scanner observations.
     """
 
     create_opportunity_history_table()
@@ -329,6 +376,7 @@ def get_recent_opportunity_history(limit=100):
             """
             SELECT
                 id,
+                mint,
                 token,
                 buy_route,
                 sell_route,
@@ -342,6 +390,7 @@ def get_recent_opportunity_history(limit=100):
                 quote_successful,
                 error,
                 market_score,
+                intelligence_score,
                 liquidity_score,
                 volume_score,
                 pair_score,
@@ -367,8 +416,7 @@ def get_token_performance(
     limit=100,
 ):
     """
-    Return aggregated historical performance
-    for each token.
+    Return aggregated historical performance for each token.
     """
 
     create_opportunity_history_table()
@@ -389,6 +437,7 @@ def get_token_performance(
         cursor.execute(
             """
             SELECT
+                mint,
                 token,
                 COUNT(*) AS total_scans,
 
@@ -488,7 +537,9 @@ def get_token_performance(
                 ) AS eligible_scan_rate
 
             FROM opportunity_history
-            GROUP BY token
+            GROUP BY
+                COALESCE(mint, ''),
+                token
             HAVING COUNT(*) >= ?
             ORDER BY
                 COALESCE(
@@ -523,8 +574,7 @@ def get_top_opportunity_tokens(
     limit=20,
 ):
     """
-    Return tokens with the strongest
-    historical performance.
+    Return tokens with the strongest historical performance.
     """
 
     return get_token_performance(
@@ -548,14 +598,10 @@ def get_opportunity_history_summary():
             """
             SELECT
                 COUNT(*) AS total_observations,
-
-                COUNT(
-                    DISTINCT token
-                ) AS unique_tokens,
-
-                COUNT(
-                    DISTINCT scanned_at
-                ) AS scan_cycles,
+                COUNT(DISTINCT token)
+                    AS unique_tokens,
+                COUNT(DISTINCT scanned_at)
+                    AS scan_cycles,
 
                 COALESCE(
                     SUM(quote_successful),
@@ -627,23 +673,7 @@ def get_opportunity_history_summary():
     finally:
         connection.close()
 
-    if not row:
-        return {
-            "total_observations": 0,
-            "unique_tokens": 0,
-            "scan_cycles": 0,
-            "successful_quotes": 0,
-            "quote_errors": 0,
-            "eligible_observations": 0,
-            "profitable_observations": 0,
-            "average_net_profit": 0.0,
-            "best_net_profit": 0.0,
-            "worst_net_profit": 0.0,
-            "average_market_score": 0.0,
-            "last_scanned_at": None,
-        }
-
-    result = dict(row)
+    result = dict(row) if row else {}
 
     integer_fields = (
         "total_observations",
@@ -671,5 +701,10 @@ def get_opportunity_history_summary():
         result[key] = float(
             result.get(key) or 0
         )
+
+    result.setdefault(
+        "last_scanned_at",
+        None,
+    )
 
     return result

@@ -17,33 +17,19 @@ DATABASE_FILE = (
     / "trades.db"
 )
 
-
-# ---------------------------------------------------------
-# Prediction model settings
-# ---------------------------------------------------------
-
 RECENT_OBSERVATION_LIMIT = 30
 SHORT_TREND_WINDOW = 5
 LONG_TREND_WINDOW = 15
 
-# Bayesian prior for profitable/eligible outcomes.
 PROBABILITY_PRIOR_SUCCESSES = 1.0
 PROBABILITY_PRIOR_ATTEMPTS = 20.0
-
-# Confidence approaches 100 as repeated scans accumulate.
 CONFIDENCE_FULL_STRENGTH_SCANS = 50
-
-# Expected-profit shrinkage prevents one lucky scan from
-# dominating predictions when history is limited.
 EXPECTED_PROFIT_PRIOR_WEIGHT = 12.0
 EXPECTED_PROFIT_PRIOR_USD = 0.0
-
-# Profit and risk normalization references.
 PROFIT_REFERENCE_USD = 0.05
 VOLATILITY_REFERENCE_USD = 0.05
 LOSS_REFERENCE_USD = 0.10
 
-# Final AI-priority weights. These sum to 1.00.
 OPPORTUNITY_WEIGHT = 0.30
 EXPECTED_PROFIT_WEIGHT = 0.22
 TREND_WEIGHT = 0.15
@@ -55,34 +41,21 @@ MAXIMUM_TOKENS = 20_000
 
 
 def get_database_connection():
-    """
-    Create a SQLite connection that returns dictionary-like rows.
-    """
-
     connection = sqlite3.connect(
         DATABASE_FILE,
         timeout=30,
     )
     connection.row_factory = sqlite3.Row
-
     return connection
 
 
 def current_timestamp():
-    """
-    Return the current local timestamp.
-    """
-
     return datetime.now().strftime(
         "%Y-%m-%d %H:%M:%S"
     )
 
 
 def safe_float(value):
-    """
-    Convert a value to float safely.
-    """
-
     try:
         return float(value or 0)
     except (TypeError, ValueError):
@@ -90,10 +63,6 @@ def safe_float(value):
 
 
 def safe_int(value):
-    """
-    Convert a value to integer safely.
-    """
-
     try:
         return int(value or 0)
     except (TypeError, ValueError):
@@ -101,10 +70,6 @@ def safe_int(value):
 
 
 def clamp(value, minimum=0.0, maximum=100.0):
-    """
-    Restrict a numeric value to a safe range.
-    """
-
     return max(
         minimum,
         min(maximum, safe_float(value)),
@@ -112,10 +77,6 @@ def clamp(value, minimum=0.0, maximum=100.0):
 
 
 def initialize_token_predictions_table():
-    """
-    Create the token-predictions table and supporting indexes.
-    """
-
     initialize_token_intelligence_table()
     create_opportunity_history_table()
 
@@ -188,30 +149,20 @@ def initialize_token_predictions_table():
             """
         )
 
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS
-            idx_token_predictions_updated
-            ON token_predictions(prediction_updated_at)
-            """
-        )
-
         connection.commit()
 
     finally:
         connection.close()
 
 
-def get_recent_history_by_symbol(
+def get_recent_history(
     per_token_limit=RECENT_OBSERVATION_LIMIT,
 ):
     """
-    Return recent historical observations grouped by symbol.
+    Return recent history indexed by mint and symbol.
 
-    opportunity_history currently stores token symbols rather
-    than mint addresses, so prediction history is matched by
-    upper-cased symbol. A later migration should store mint in
-    opportunity_history to eliminate duplicate-symbol ambiguity.
+    Mint is preferred. Symbol fallback preserves compatibility
+    with older history rows that were saved before mint migration.
     """
 
     create_opportunity_history_table()
@@ -228,6 +179,7 @@ def get_recent_history_by_symbol(
         cursor.execute(
             """
             SELECT
+                mint,
                 token,
                 net_profit,
                 eligible,
@@ -235,43 +187,55 @@ def get_recent_history_by_symbol(
                 market_score,
                 scanned_at
             FROM opportunity_history
-            ORDER BY token ASC, id DESC
+            ORDER BY id DESC
             """
         )
 
-        rows = cursor.fetchall()
+        rows = [
+            dict(row)
+            for row in cursor.fetchall()
+        ]
 
     finally:
         connection.close()
 
-    grouped = {}
+    by_mint = {}
+    by_symbol = {}
 
     for row in rows:
+        mint = str(
+            row.get("mint") or ""
+        ).strip()
+
         symbol = str(
-            row["token"] or ""
-        ).upper()
+            row.get("token") or ""
+        ).strip().upper()
 
-        if not symbol:
-            continue
+        if mint:
+            history = by_mint.setdefault(
+                mint,
+                [],
+            )
 
-        history = grouped.setdefault(
-            symbol,
-            [],
-        )
+            if len(history) < per_token_limit:
+                history.append(row)
 
-        if len(history) >= per_token_limit:
-            continue
+        if symbol:
+            history = by_symbol.setdefault(
+                symbol,
+                [],
+            )
 
-        history.append(dict(row))
+            if len(history) < per_token_limit:
+                history.append(row)
 
-    return grouped
+    return {
+        "by_mint": by_mint,
+        "by_symbol": by_symbol,
+    }
 
 
 def calculate_confidence(total_scans):
-    """
-    Convert sample size into a 0-to-100 confidence score.
-    """
-
     total_scans = max(
         0,
         safe_int(total_scans),
@@ -280,40 +244,29 @@ def calculate_confidence(total_scans):
     if total_scans == 0:
         return 0.0
 
-    score = (
-        1.0
-        - math.exp(
-            -total_scans
-            / CONFIDENCE_FULL_STRENGTH_SCANS
+    return clamp(
+        (
+            1.0
+            - math.exp(
+                -total_scans
+                / CONFIDENCE_FULL_STRENGTH_SCANS
+            )
         )
-    ) * 100.0
-
-    return clamp(score)
+        * 100.0
+    )
 
 
 def calculate_probability_score(
     successes,
     attempts,
 ):
-    """
-    Return a Bayesian-smoothed event probability percentage.
-    """
-
-    successes = max(
-        0.0,
-        safe_float(successes),
-    )
-    attempts = max(
-        0.0,
-        safe_float(attempts),
-    )
-
     adjusted_successes = (
-        successes
+        max(0.0, safe_float(successes))
         + PROBABILITY_PRIOR_SUCCESSES
     )
+
     adjusted_attempts = (
-        attempts
+        max(0.0, safe_float(attempts))
         + PROBABILITY_PRIOR_ATTEMPTS
     )
 
@@ -327,47 +280,30 @@ def calculate_probability_score(
     )
 
 
-def calculate_expected_profit(
-    profits,
-):
-    """
-    Calculate shrinkage-adjusted expected profit.
-    """
-
+def calculate_expected_profit(profits):
     if not profits:
         return EXPECTED_PROFIT_PRIOR_USD
 
     observed_average = mean(profits)
     observed_count = len(profits)
 
-    weighted_total = (
+    return (
         observed_average * observed_count
         + EXPECTED_PROFIT_PRIOR_USD
         * EXPECTED_PROFIT_PRIOR_WEIGHT
-    )
-
-    total_weight = (
+    ) / (
         observed_count
         + EXPECTED_PROFIT_PRIOR_WEIGHT
     )
 
-    if total_weight <= 0:
-        return 0.0
-
-    return weighted_total / total_weight
-
 
 def calculate_profit_score(profit_usd):
-    """
-    Convert expected profit into a bounded 0-to-100 score.
-    """
-
     scaled_profit = (
         safe_float(profit_usd)
         / max(PROFIT_REFERENCE_USD, 0.000001)
     )
 
-    score = (
+    return clamp(
         100.0
         / (
             1.0
@@ -375,14 +311,8 @@ def calculate_profit_score(profit_usd):
         )
     )
 
-    return clamp(score)
-
 
 def calculate_stability_score(profits):
-    """
-    Reward low volatility and sufficient observations.
-    """
-
     if not profits:
         return 0.0
 
@@ -412,49 +342,42 @@ def calculate_stability_score(profits):
 
 
 def calculate_trend_score(profits):
-    """
-    Compare recent and longer-term average profit.
-
-    A score above 50 means improving performance.
-    A score below 50 means deteriorating performance.
-    """
-
     if not profits:
         return 50.0
 
-    short_values = profits[
-        :SHORT_TREND_WINDOW
-    ]
-    long_values = profits[
-        :LONG_TREND_WINDOW
-    ]
+    short_average = mean(
+        profits[:SHORT_TREND_WINDOW]
+    )
 
-    short_average = mean(short_values)
-    long_average = mean(long_values)
+    long_average = mean(
+        profits[:LONG_TREND_WINDOW]
+    )
 
-    difference = short_average - long_average
+    difference = (
+        short_average
+        - long_average
+    )
 
     scaled_difference = (
         difference
         / max(PROFIT_REFERENCE_USD, 0.000001)
     )
 
-    score = 50.0 + math.tanh(
-        scaled_difference * 2.0
-    ) * 50.0
-
-    return clamp(score)
+    return clamp(
+        50.0
+        + math.tanh(
+            scaled_difference * 2.0
+        )
+        * 50.0
+    )
 
 
 def calculate_downside_risk_score(profits):
-    """
-    Return a 0-to-100 risk score where higher means riskier.
-    """
-
     if not profits:
         return 50.0
 
     worst_profit = min(profits)
+
     negative_profits = [
         abs(value)
         for value in profits
@@ -479,10 +402,8 @@ def calculate_downside_risk_score(profits):
         * 100.0
     )
 
-    volatility_penalty = 0.0
-
-    if len(profits) > 1:
-        volatility_penalty = clamp(
+    volatility_penalty = (
+        clamp(
             pstdev(profits)
             / max(
                 VOLATILITY_REFERENCE_USD,
@@ -490,6 +411,9 @@ def calculate_downside_risk_score(profits):
             )
             * 100.0
         )
+        if len(profits) > 1
+        else 0.0
+    )
 
     return clamp(
         worst_loss_penalty * 0.50
@@ -502,10 +426,6 @@ def calculate_prediction_record(
     intelligence_record,
     history_rows=None,
 ):
-    """
-    Calculate one token's complete prediction profile.
-    """
-
     history_rows = history_rows or []
 
     successful_rows = [
@@ -536,8 +456,8 @@ def calculate_prediction_record(
 
     opportunity_probability = (
         calculate_probability_score(
-            successes=profitable_count,
-            attempts=successful_count,
+            profitable_count,
+            successful_count,
         )
     )
 
@@ -613,8 +533,6 @@ def calculate_prediction_record(
         prediction_confidence / 100.0
     )
 
-    # New tokens remain anchored to their intelligence score.
-    # As evidence grows, the prediction model contributes more.
     blended_priority = (
         intelligence_score
         * (1.0 - confidence_ratio)
@@ -666,14 +584,14 @@ def calculate_prediction_record(
         else 0.0
     )
 
-    last_scanned_at = None
-
-    for row in history_rows:
-        scanned_at = row.get("scanned_at")
-
-        if scanned_at:
-            last_scanned_at = scanned_at
-            break
+    last_scanned_at = next(
+        (
+            row.get("scanned_at")
+            for row in history_rows
+            if row.get("scanned_at")
+        ),
+        None,
+    )
 
     return {
         "mint": intelligence_record.get("mint"),
@@ -744,9 +662,7 @@ def calculate_prediction_record(
             )
         ),
         "recent_observations": recent_count,
-        "profitable_observations": (
-            profitable_count
-        ),
+        "profitable_observations": profitable_count,
         "eligible_observations": eligible_count,
         "intelligence_score": round(
             intelligence_score,
@@ -768,10 +684,6 @@ def calculate_prediction_record(
 
 
 def save_token_predictions(records):
-    """
-    Insert or update token prediction records.
-    """
-
     initialize_token_predictions_table()
 
     if not records:
@@ -868,41 +780,36 @@ def save_token_predictions(records):
                     prediction_updated_at =
                         excluded.prediction_updated_at
                 """,
-                (
-                    record["mint"],
-                    record["symbol"],
-                    record["name"],
-                    record[
-                        "opportunity_probability"
-                    ],
-                    record["expected_profit_usd"],
-                    record["expected_profit_score"],
-                    record["trend_score"],
-                    record["stability_score"],
-                    record["downside_risk_score"],
-                    record["prediction_confidence"],
-                    record["ai_priority"],
-                    record["recent_average_profit"],
-                    record["long_average_profit"],
-                    record["profit_volatility"],
-                    record[
-                        "recent_profitable_rate"
-                    ],
-                    record["recent_eligible_rate"],
-                    record["total_scans"],
-                    record["successful_quotes"],
-                    record["recent_observations"],
-                    record[
-                        "profitable_observations"
-                    ],
-                    record["eligible_observations"],
-                    record["intelligence_score"],
-                    record[
-                        "intelligence_confidence"
-                    ],
-                    record["market_quality_score"],
-                    record["last_scanned_at"],
-                    record["prediction_updated_at"],
+                tuple(
+                    record[key]
+                    for key in (
+                        "mint",
+                        "symbol",
+                        "name",
+                        "opportunity_probability",
+                        "expected_profit_usd",
+                        "expected_profit_score",
+                        "trend_score",
+                        "stability_score",
+                        "downside_risk_score",
+                        "prediction_confidence",
+                        "ai_priority",
+                        "recent_average_profit",
+                        "long_average_profit",
+                        "profit_volatility",
+                        "recent_profitable_rate",
+                        "recent_eligible_rate",
+                        "total_scans",
+                        "successful_quotes",
+                        "recent_observations",
+                        "profitable_observations",
+                        "eligible_observations",
+                        "intelligence_score",
+                        "intelligence_confidence",
+                        "market_quality_score",
+                        "last_scanned_at",
+                        "prediction_updated_at",
+                    )
                 ),
             )
 
@@ -921,18 +828,10 @@ def save_token_predictions(records):
 
 
 def refresh_token_predictions():
-    """
-    Recalculate predictions for all stored intelligence tokens.
-    """
-
     initialize_token_predictions_table()
 
-    history_by_symbol = (
-        get_recent_history_by_symbol(
-            per_token_limit=(
-                RECENT_OBSERVATION_LIMIT
-            )
-        )
+    history = get_recent_history(
+        RECENT_OBSERVATION_LIMIT
     )
 
     connection = get_database_connection()
@@ -960,22 +859,32 @@ def refresh_token_predictions():
     prediction_records = []
 
     for intelligence_record in intelligence_records:
-        symbol_key = str(
+        mint = str(
+            intelligence_record.get("mint")
+            or ""
+        ).strip()
+
+        symbol = str(
             intelligence_record.get("symbol")
             or ""
-        ).upper()
+        ).strip().upper()
 
         history_rows = (
-            history_by_symbol.get(symbol_key)
-            or []
+            history["by_mint"].get(mint)
+            if mint
+            else None
         )
+
+        if not history_rows:
+            history_rows = (
+                history["by_symbol"].get(symbol)
+                or []
+            )
 
         prediction_records.append(
             calculate_prediction_record(
-                intelligence_record=(
-                    intelligence_record
-                ),
-                history_rows=history_rows,
+                intelligence_record,
+                history_rows,
             )
         )
 
@@ -993,10 +902,6 @@ def refresh_token_predictions():
 
 
 def get_token_prediction(mint):
-    """
-    Return prediction information for one mint.
-    """
-
     if not mint:
         return None
 
@@ -1027,10 +932,6 @@ def get_top_predicted_tokens(
     limit=100,
     minimum_confidence=0,
 ):
-    """
-    Return tokens ranked by final AI priority.
-    """
-
     initialize_token_predictions_table()
 
     limit = max(1, int(limit))
@@ -1075,10 +976,6 @@ def get_top_predicted_tokens(
 
 
 def get_prediction_summary():
-    """
-    Return overall prediction-engine statistics.
-    """
-
     initialize_token_predictions_table()
 
     connection = get_database_connection()
@@ -1124,44 +1021,32 @@ def get_prediction_summary():
     finally:
         connection.close()
 
-    if not row:
-        return {
-            "total_tokens": 0,
-            "average_opportunity_probability": 0.0,
-            "average_expected_profit_usd": 0.0,
-            "average_prediction_confidence": 0.0,
-            "average_ai_priority": 0.0,
-            "highest_ai_priority": 0.0,
-            "positive_expected_profit_tokens": 0,
-            "improving_tokens": 0,
-            "last_updated_at": None,
-        }
+    result = dict(row) if row else {}
 
-    result = dict(row)
-
-    integer_fields = (
+    for key in (
         "total_tokens",
         "positive_expected_profit_tokens",
         "improving_tokens",
-    )
+    ):
+        result[key] = safe_int(
+            result.get(key)
+        )
 
-    float_fields = (
+    for key in (
         "average_opportunity_probability",
         "average_expected_profit_usd",
         "average_prediction_confidence",
         "average_ai_priority",
         "highest_ai_priority",
-    )
-
-    for key in integer_fields:
-        result[key] = safe_int(
-            result.get(key)
-        )
-
-    for key in float_fields:
+    ):
         result[key] = safe_float(
             result.get(key)
         )
+
+    result.setdefault(
+        "last_updated_at",
+        None,
+    )
 
     return result
 
@@ -1178,29 +1063,3 @@ if __name__ == "__main__":
         "Prediction records saved: "
         f"{refresh_result['prediction_records_saved']:,}"
     )
-
-    top_tokens = get_top_predicted_tokens(
-        limit=10,
-        minimum_confidence=0,
-    )
-
-    print("\nTop predicted tokens:")
-
-    for position, token in enumerate(
-        top_tokens,
-        start=1,
-    ):
-        print(
-            f"{position}. "
-            f"{token['symbol']} — "
-            f"AI priority "
-            f"{token['ai_priority']:.2f}/100, "
-            f"opportunity "
-            f"{token['opportunity_probability']:.2f}%, "
-            f"expected profit "
-            f"${token['expected_profit_usd']:.6f}, "
-            f"trend "
-            f"{token['trend_score']:.2f}/100, "
-            f"confidence "
-            f"{token['prediction_confidence']:.2f}/100"
-        )
