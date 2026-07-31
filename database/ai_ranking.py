@@ -12,6 +12,12 @@ from database.token_metrics import (
 from database.token_predictions import (
     initialize_token_predictions_table,
 )
+from database.pattern_learning import (
+    ensure_pattern_schema,
+)
+from database.reinforcement_learning import (
+    get_champion_config,
+)
 
 
 DATABASE_FILE = (
@@ -298,6 +304,7 @@ def get_ranking_candidates(
     """
 
     initialize_ai_ranking_table()
+    ensure_pattern_schema()
 
     minimum_liquidity_usd = max(
         0.0,
@@ -348,7 +355,17 @@ def get_ranking_candidates(
                 token_predictions.stability_score,
                 token_predictions.downside_risk_score,
                 token_predictions.prediction_confidence,
-                token_predictions.prediction_updated_at
+                token_predictions.prediction_updated_at,
+
+                COALESCE(
+                    pattern_learning.pattern_score,
+                    50
+                ) AS pattern_score,
+
+                COALESCE(
+                    pattern_learning.sample_confidence,
+                    0
+                ) AS pattern_confidence
 
             FROM token_universe
 
@@ -362,6 +379,10 @@ def get_ranking_candidates(
 
             INNER JOIN token_predictions
                 ON token_predictions.mint =
+                   token_universe.mint
+
+            LEFT JOIN pattern_learning
+                ON pattern_learning.mint =
                    token_universe.mint
 
             WHERE token_universe.enabled = 1
@@ -414,6 +435,68 @@ def calculate_ai_ranking_record(candidate):
     accumulates.
     """
 
+    model = get_champion_config()
+
+    market_weight = safe_float(
+        model.get("market_weight")
+        if model
+        else MARKET_SCORE_WEIGHT
+    )
+    intelligence_weight = safe_float(
+        model.get("intelligence_weight")
+        if model
+        else INTELLIGENCE_SCORE_WEIGHT
+    )
+    prediction_weight = safe_float(
+        model.get("prediction_weight")
+        if model
+        else PREDICTION_PRIORITY_WEIGHT
+    )
+    opportunity_weight = safe_float(
+        model.get("opportunity_weight")
+        if model
+        else OPPORTUNITY_PROBABILITY_WEIGHT
+    )
+    expected_profit_weight = safe_float(
+        model.get("expected_profit_weight")
+        if model
+        else EXPECTED_PROFIT_SCORE_WEIGHT
+    )
+    trend_weight = safe_float(
+        model.get("trend_weight")
+        if model
+        else TREND_SCORE_WEIGHT
+    )
+    stability_weight = safe_float(
+        model.get("stability_weight")
+        if model
+        else STABILITY_SCORE_WEIGHT
+    )
+    pattern_weight = safe_float(
+        model.get("pattern_weight")
+        if model
+        else 0.0
+    )
+    risk_penalty_weight = safe_float(
+        model.get("risk_penalty_weight")
+        if model
+        else DOWNSIDE_RISK_PENALTY_WEIGHT
+    )
+    intelligence_confidence_weight = safe_float(
+        model.get(
+            "intelligence_confidence_weight"
+        )
+        if model
+        else INTELLIGENCE_CONFIDENCE_WEIGHT
+    )
+    prediction_confidence_weight = safe_float(
+        model.get(
+            "prediction_confidence_weight"
+        )
+        if model
+        else PREDICTION_CONFIDENCE_WEIGHT
+    )
+
     market_score = clamp(
         candidate.get("market_score")
     )
@@ -442,6 +525,11 @@ def calculate_ai_ranking_record(candidate):
         candidate.get("stability_score")
     )
 
+    pattern_score = clamp(
+        candidate.get("pattern_score")
+        or 50.0
+    )
+
     downside_risk_score = clamp(
         candidate.get("downside_risk_score")
     )
@@ -456,26 +544,28 @@ def calculate_ai_ranking_record(candidate):
 
     raw_opportunity_score = (
         market_score
-        * MARKET_SCORE_WEIGHT
+        * market_weight
         + intelligence_score
-        * INTELLIGENCE_SCORE_WEIGHT
+        * intelligence_weight
         + prediction_ai_priority
-        * PREDICTION_PRIORITY_WEIGHT
+        * prediction_weight
         + opportunity_probability
-        * OPPORTUNITY_PROBABILITY_WEIGHT
+        * opportunity_weight
         + expected_profit_score
-        * EXPECTED_PROFIT_SCORE_WEIGHT
+        * expected_profit_weight
         + trend_score
-        * TREND_SCORE_WEIGHT
+        * trend_weight
         + stability_score
-        * STABILITY_SCORE_WEIGHT
+        * stability_weight
+        + pattern_score
+        * pattern_weight
     )
 
     combined_confidence = clamp(
         intelligence_confidence
-        * INTELLIGENCE_CONFIDENCE_WEIGHT
+        * intelligence_confidence_weight
         + prediction_confidence
-        * PREDICTION_CONFIDENCE_WEIGHT
+        * prediction_confidence_weight
     )
 
     confidence_ratio = (
@@ -498,7 +588,7 @@ def calculate_ai_ranking_record(candidate):
 
     risk_penalty = (
         downside_risk_score
-        * DOWNSIDE_RISK_PENALTY_WEIGHT
+        * risk_penalty_weight
         * (
             0.35
             + confidence_ratio * 0.65
@@ -619,6 +709,25 @@ def calculate_ai_ranking_record(candidate):
         "stability_score": round(
             stability_score,
             4,
+        ),
+        "pattern_score": round(
+            pattern_score,
+            4,
+        ),
+        "pattern_confidence": round(
+            safe_float(
+                candidate.get(
+                    "pattern_confidence"
+                )
+            ),
+            4,
+        ),
+        "reinforcement_model_id": (
+            safe_int(
+                model.get("model_id")
+            )
+            if model
+            else 0
         ),
         "downside_risk_score": round(
             downside_risk_score,

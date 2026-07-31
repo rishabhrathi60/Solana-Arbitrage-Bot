@@ -3,6 +3,13 @@ from datetime import datetime
 from database.pattern_learning import (
     update_learning,
 )
+from database.ai_ranking import (
+    refresh_ai_rankings,
+)
+from database.reinforcement_learning import (
+    get_reinforcement_summary,
+    run_reinforcement_cycle,
+)
 import requests
 
 from database.opportunity_history import (
@@ -504,6 +511,164 @@ def refresh_predictions_after_cycle():
     return refresh_result
 
 
+def run_reinforcement_after_cycle(
+    results,
+    cycle_id,
+):
+    """
+    Evaluate champion and challenger in paper-mode shadow testing.
+    """
+
+    print(
+        "\nEvaluating reinforcement-learning "
+        "champion and challenger..."
+    )
+
+    try:
+        result = run_reinforcement_cycle(
+            results=results,
+            cycle_id=cycle_id,
+        )
+
+    except Exception as error:
+        print(
+            "Reinforcement-learning evaluation failed."
+        )
+        print(error)
+        return None
+
+    print(
+        "Reinforcement evaluation completed."
+    )
+    print(
+        "  Models evaluated: "
+        f"{result['evaluated_models']}"
+    )
+    print(
+        "  Promotion action: "
+        f"{result['promotion_action']}"
+    )
+
+    champion = result.get("champion") or {}
+    challenger = result.get("challenger") or {}
+
+    if champion:
+        print(
+            "  Champion: "
+            f"{champion.get('model_name')} — "
+            f"fitness "
+            f"{safe_float(champion.get('fitness_score')):.4f}, "
+            f"cycles "
+            f"{safe_int(champion.get('evaluation_cycles'))}, "
+            f"observations "
+            f"{safe_int(champion.get('evaluation_observations'))}"
+        )
+
+    if challenger:
+        print(
+            "  Challenger: "
+            f"{challenger.get('model_name')} — "
+            f"fitness "
+            f"{safe_float(challenger.get('fitness_score')):.4f}, "
+            f"cycles "
+            f"{safe_int(challenger.get('evaluation_cycles'))}, "
+            f"observations "
+            f"{safe_int(challenger.get('evaluation_observations'))}"
+        )
+
+    return result
+
+
+def refresh_ai_rankings_after_cycle():
+    """
+    Refresh final AI rankings after learning and model evaluation.
+    """
+
+    print(
+        "\nRefreshing AI Opportunity Rankings "
+        "with the champion model..."
+    )
+
+    try:
+        result = refresh_ai_rankings(
+            minimum_liquidity_usd=(
+                MINIMUM_LIQUIDITY_USD
+            ),
+            minimum_volume_24h_usd=(
+                MINIMUM_VOLUME_24H_USD
+            ),
+        )
+
+    except Exception as error:
+        print(
+            "AI Opportunity Ranking refresh failed."
+        )
+        print(error)
+        return None
+
+    print(
+        "AI Opportunity Rankings refreshed."
+    )
+    print(
+        "  Candidates processed: "
+        f"{result['ranking_candidates_processed']:,}"
+    )
+    print(
+        "  Rankings saved: "
+        f"{result['ranking_records_saved']:,}"
+    )
+    print(
+        "  Rankings updated at: "
+        f"{result['updated_at']}"
+    )
+
+    return result
+
+
+def print_reinforcement_summary():
+    """
+    Display the current autonomous paper-learning status.
+    """
+
+    try:
+        summary = get_reinforcement_summary()
+    except Exception as error:
+        print(
+            "\nReinforcement summary unavailable."
+        )
+        print(error)
+        return
+
+    champion = summary.get("champion") or {}
+    challenger = summary.get("challenger") or {}
+
+    print("\nReinforcement Learning summary:")
+    print(
+        "  Operating mode: "
+        f"{summary.get('operating_mode')}"
+    )
+    print(
+        "  Champion model: "
+        f"{champion.get('model_name') or 'Unavailable'}"
+    )
+    print(
+        "  Champion fitness: "
+        f"{safe_float(champion.get('fitness_score')):.4f}"
+    )
+    print(
+        "  Champion observations: "
+        f"{safe_int(champion.get('evaluation_observations')):,}"
+    )
+    print(
+        "  Challenger model: "
+        f"{challenger.get('model_name') or 'Not created'}"
+    )
+    print(
+        "  Challenger fitness: "
+        f"{safe_float(challenger.get('fitness_score')):.4f}"
+    )
+
+
 def run_one_scan_cycle():
     """
     Run one complete scanner cycle.
@@ -521,6 +686,7 @@ def run_one_scan_cycle():
     """
 
     scan_time = current_timestamp()
+    cycle_id = scan_time
 
     print(
         f"[{scan_time}] Starting token scan..."
@@ -556,11 +722,6 @@ def run_one_scan_cycle():
         "Historical scanner observations saved: "
         f"{history_saved_count} rows."
     )
-    update_learning(results)
-
-    print(
-        "Pattern learning database updated."
-    )
     paper_trade_count = (
         process_paper_trades(
             results
@@ -576,21 +737,46 @@ def run_one_scan_cycle():
         refresh_intelligence_after_cycle()
     )
 
-    # Predictions depend on the intelligence table.
-    # Only refresh them when intelligence completed
-    # successfully during this cycle.
+    prediction_result = None
+
     if intelligence_result is not None:
-        refresh_predictions_after_cycle()
+        prediction_result = (
+            refresh_predictions_after_cycle()
+        )
     else:
         print(
             "\nPrediction refresh skipped because "
             "the intelligence refresh failed."
         )
 
+    pattern_result = update_learning(
+        results
+    )
+
+    print(
+        "Pattern Learning Engine rebuilt: "
+        f"{safe_int(pattern_result.get('patterns_rebuilt')):,} "
+        "patterns."
+    )
+
+    run_reinforcement_after_cycle(
+        results=results,
+        cycle_id=cycle_id,
+    )
+
+    if prediction_result is not None:
+        refresh_ai_rankings_after_cycle()
+    else:
+        print(
+            "\nAI ranking refresh skipped because "
+            "predictions were not refreshed."
+        )
+
     print_historical_summary()
     print_top_historical_tokens()
     print_prediction_summary()
     print_top_predicted_tokens()
+    print_reinforcement_summary()
 
     return results
 
@@ -634,8 +820,17 @@ def run_automatic_scanner():
     )
 
     print(
-        "Prediction-based scanner ranking: "
-        "NOT ENABLED YET"
+        "AI opportunity ranking: ON"
+    )
+
+    print(
+        "Reinforcement learning: "
+        "PAPER-MODE CHAMPION/CHALLENGER"
+    )
+
+    print(
+        "Live trading gates: "
+        "NOT UNLOCKED"
     )
 
     print("Press Control + C to stop.")
