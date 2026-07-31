@@ -1,0 +1,28 @@
+{
+  "summary": {
+    "generated_at": "2026-07-31T22:04:27.031613+00:00",
+    "schema_version": "11A.1.0",
+    "rows": 1300,
+    "cycles": 13,
+    "unique_assets": 449,
+    "unique_tokens": 312,
+    "successful_quotes": 1297,
+    "quote_errors": 3,
+    "profitable_labels": 3,
+    "negative_labels": 1294,
+    "feature_count": 52,
+    "label_count": 4,
+    "csv_path": "research/feature_store/features.csv",
+    "jsonl_path": "research/feature_store/features.jsonl",
+    "metadata_path": "research/feature_store/feature_store_metadata.json",
+    "manifest_path": "research/feature_store/feature_manifest.json",
+    "sha256_csv": "cd6f45795e9e06733b977999cd56d581fd6434290c7a0599c9c6b8c524a1d368",
+    "sha256_jsonl": "b99a6ff036dc2dd706ec3cb3e35b6fd33e58abf1c460783ffcdeff1c552ab53a"
+  },
+  "configuration": {
+    "rolling_window_events": 25,
+    "include_quote_errors": true,
+    "include_outcome_labels": true
+  },
+  "zero_lookahead_rule": "Each feature row is emitted before the same event outcome updates token or global history."
+}

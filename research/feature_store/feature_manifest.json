@@ -1,0 +1,472 @@
+{
+  "schema_version": "11A.1.0",
+  "definitions": [
+    {
+      "name": "feature_row_number",
+      "role": "IDENTIFIER",
+      "data_type": "int",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "source_event_id",
+      "role": "IDENTIFIER",
+      "data_type": "int",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "feature_schema_version",
+      "role": "IDENTIFIER",
+      "data_type": "str",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "timestamp",
+      "role": "IDENTIFIER",
+      "data_type": "datetime",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "timestamp_unix",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "date_utc",
+      "role": "FEATURE",
+      "data_type": "str",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "hour_utc",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "weekday_utc",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "cycle_number",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "cycle_id",
+      "role": "IDENTIFIER",
+      "data_type": "str",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "cycle_position",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "cycle_size",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "cycle_progress",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "token",
+      "role": "IDENTIFIER",
+      "data_type": "str",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "token_key",
+      "role": "IDENTIFIER",
+      "data_type": "str",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "mint",
+      "role": "IDENTIFIER",
+      "data_type": "str | None",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "asset_key",
+      "role": "IDENTIFIER",
+      "data_type": "str",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "route_pair",
+      "role": "IDENTIFIER",
+      "data_type": "str",
+      "source": "BacktestEvent identity",
+      "lookahead_safe": true
+    },
+    {
+      "name": "starting_amount_usd",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "estimated_cost_usd",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "cost_bps",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "source_decision",
+      "role": "FEATURE",
+      "data_type": "str",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "source_decision_rank",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "source_eligible",
+      "role": "FEATURE",
+      "data_type": "bool",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "quote_successful",
+      "role": "FEATURE",
+      "data_type": "bool",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "market_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "liquidity_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "volume_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "pair_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "intelligence_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "composite_market_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "score_dispersion",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "minimum_component_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "maximum_component_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "score_range",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "has_mint",
+      "role": "FEATURE",
+      "data_type": "bool",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "has_route",
+      "role": "FEATURE",
+      "data_type": "bool",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "has_error",
+      "role": "FEATURE",
+      "data_type": "bool",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_token_observations",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_token_profitable_observations",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_token_win_rate",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_token_average_net_profit_usd",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_token_average_cost_bps",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_global_observations",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_global_profitable_observations",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_global_win_rate",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_global_average_net_profit_usd",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_token_observations",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_token_win_rate",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_token_average_profit_usd",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_token_profit_std_usd",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_token_average_composite_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_global_observations",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_global_win_rate",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_global_average_profit_usd",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_global_profit_std_usd",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "rolling_global_average_composite_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_cycle_average_market_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_cycle_average_composite_score",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_cycle_profitable_rate",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "prior_cycle_average_net_profit_usd",
+      "role": "FEATURE",
+      "data_type": "float",
+      "source": "Past-only historical aggregation",
+      "lookahead_safe": true
+    },
+    {
+      "name": "cycles_since_token_seen",
+      "role": "FEATURE",
+      "data_type": "int",
+      "source": "BacktestEvent pre-outcome field",
+      "lookahead_safe": true
+    },
+    {
+      "name": "execution_candidate_label",
+      "role": "LABEL",
+      "data_type": "bool | None",
+      "source": "BacktestEvent realized outcome",
+      "lookahead_safe": false
+    },
+    {
+      "name": "realized_net_profit_usd",
+      "role": "LABEL",
+      "data_type": "float | None",
+      "source": "BacktestEvent realized outcome",
+      "lookahead_safe": false
+    },
+    {
+      "name": "profitable_label",
+      "role": "LABEL",
+      "data_type": "bool | None",
+      "source": "BacktestEvent realized outcome",
+      "lookahead_safe": false
+    },
+    {
+      "name": "outcome_label",
+      "role": "LABEL",
+      "data_type": "str | None",
+      "source": "BacktestEvent realized outcome",
+      "lookahead_safe": false
+    }
+  ],
+  "files": {
+    "features_csv": "research/feature_store/features.csv",
+    "features_jsonl": "research/feature_store/features.jsonl",
+    "metadata_json": "research/feature_store/feature_store_metadata.json"
+  }
+}
