@@ -13,3 +13,8 @@ backtesting/exports/
 # Generated feature-store data
 research/feature_store/features.csv
 research/feature_store/features.jsonl
+
+# Generated ML research outputs
+research/ml_research/holdout_predictions.csv
+research/ml_research/feature_importance.csv
+research/ml_research/*.pkl
