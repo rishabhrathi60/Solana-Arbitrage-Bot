@@ -7,3 +7,5 @@
 wallet.json
 *.db
 *.log
+# Generated backtesting exports
+backtesting/exports/
