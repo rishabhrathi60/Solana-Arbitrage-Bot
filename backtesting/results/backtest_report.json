@@ -1,0 +1,48 @@
+{
+  "strategy_name": "ConservativeCompositeStrategy",
+  "generated_at": "2026-07-31 12:49:45.564071",
+  "configuration": {
+    "risk": {
+      "initial_capital_usd": 1000.0,
+      "risk_per_trade_pct": 0.25,
+      "maximum_position_pct": 5.0,
+      "maximum_cycle_loss_pct": 2.0,
+      "maximum_drawdown_pct": 10.0,
+      "maximum_consecutive_losses": 3,
+      "maximum_trades_per_cycle": 3,
+      "minimum_trade_notional_usd": 1.0,
+      "minimum_confidence": 0.5,
+      "cooldown_cycles": 2
+    },
+    "recent_window": 20,
+    "reject_quote_errors": true,
+    "require_source_eligibility": false,
+    "require_source_execute": false
+  },
+  "metrics": {
+    "initial_capital_usd": 1000.0,
+    "ending_capital_usd": 999.7531702669414,
+    "net_profit_usd": -0.24682973305857558,
+    "total_return_pct": -0.024682973305856226,
+    "trades": 3,
+    "wins": 0,
+    "losses": 3,
+    "win_rate_pct": 0.0,
+    "average_trade_usd": -0.08227657768616482,
+    "average_win_usd": 0.0,
+    "average_loss_usd": -0.08227657768616482,
+    "payoff_ratio": 0.0,
+    "profit_factor": 0.0,
+    "expectancy_usd": -0.08227657768616482,
+    "best_trade_usd": -0.07595000000000232,
+    "worst_trade_usd": -0.08918593817349656,
+    "maximum_drawdown_pct": 0.02468297330585756,
+    "maximum_consecutive_losses": 3,
+    "positive_cycles": 0,
+    "negative_cycles": 1,
+    "flat_cycles": 12,
+    "rejected_events": 1297,
+    "strategy_skips": 1139,
+    "risk_rejections": 158
+  }
+}
