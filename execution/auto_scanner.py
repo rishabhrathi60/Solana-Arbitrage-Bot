@@ -15,6 +15,10 @@ from database.decision_engine import (
     get_decision_summary,
     get_top_decisions,
 )
+from database.fee_simulator import (
+    get_fee_simulation_summary,
+    simulate_cycle,
+)
 from database.opportunity_history import (
     get_opportunity_history_summary,
     get_top_opportunity_tokens,
@@ -489,6 +493,64 @@ def print_risk_summary():
         f"{safe_float(summary.get('average_process_score')):.2f}/100"
     )
 
+def print_fee_simulation_summary():
+    try:
+        summary = (
+            get_fee_simulation_summary()
+        )
+    except Exception as error:
+        print(
+            "\nFee-Aware Execution summary unavailable."
+        )
+        print(error)
+        return
+
+    print("\nFee-Aware Execution Simulator summary:")
+    print(
+        "  Operating mode: SIMULATION ONLY"
+    )
+    print(
+        "  Corrected schema-aware audits: "
+        f"{safe_int(summary.get('total_audits')):,}"
+    )
+    print(
+        "  Execution candidates: "
+        f"{safe_int(summary.get('execution_candidates')):,}"
+    )
+    print(
+        "  Informational WATCH/SKIP audits: "
+        f"{safe_int(summary.get('informational_audits')):,}"
+    )
+    print(
+        "  Candidate passes / blocks: "
+        f"{safe_int(summary.get('passed')):,} / "
+        f"{safe_int(summary.get('blocked')):,}"
+    )
+    print(
+        "  Incomplete execution candidates: "
+        f"{safe_int(summary.get('incomplete_candidates')):,}"
+    )
+    print(
+        "  Average corrected all-in cost: "
+        f"${safe_float(summary.get('average_total_cost_usd')):.6f}"
+    )
+    print(
+        "  Average conservative net profit: "
+        f"${safe_float(summary.get('average_conservative_net_profit_usd')):.6f}"
+    )
+    print(
+        "  Best conservative net profit: "
+        f"${safe_float(summary.get('best_conservative_net_profit_usd')):.6f}"
+    )
+    print(
+        "  Average gross-to-cost ratio: "
+        f"{safe_float(summary.get('average_profit_to_cost_ratio')):.2f}x"
+    )
+    print(
+        "  Last updated: "
+        f"{summary.get('last_updated_at') or 'Not available'}"
+    )
+
 def process_paper_trades(results, cycle_id):
     successful_results = [
         result
@@ -568,6 +630,29 @@ def process_paper_trades(results, cycle_id):
                     "; ".join(reasons)
                     if reasons
                     else "Risk approval missing."
+                )
+            )
+            continue
+
+        if not bool(
+            result.get(
+                "fee_simulation_passed"
+            )
+        ):
+            reasons = (
+                result.get(
+                    "fee_simulation_blocked_reasons"
+                )
+                or []
+            )
+
+            print(
+                "PAPER TRADE BLOCKED BY FEE SIMULATOR: "
+                f"{token} — "
+                + (
+                    "; ".join(reasons)
+                    if reasons
+                    else "Execution simulation failed."
                 )
             )
             continue
@@ -963,6 +1048,39 @@ def run_one_scan_cycle():
                 "Risk engine failure."
             ]
 
+    try:
+        fee_result = simulate_cycle(
+            results=results,
+            cycle_id=cycle_id,
+        )
+
+        print(
+            "Fee-Aware Execution Simulator completed: "
+            f"{fee_result['execution_candidates']} "
+            "execution candidates, "
+            f"{fee_result['passed']} passed, "
+            f"{fee_result['blocked']} blocked, "
+            f"{fee_result['informational']} "
+            "informational audits."
+        )
+
+    except Exception as error:
+        print(
+            "Fee-Aware Execution simulation failed."
+        )
+        print(error)
+
+        for result in results:
+            result[
+                "fee_simulation_passed"
+            ] = 0
+
+            result[
+                "fee_simulation_blocked_reasons"
+            ] = [
+                "Fee simulator failure."
+            ]
+
     if snapshot_id:
         try:
             accuracy_result = (
@@ -1052,6 +1170,7 @@ def run_one_scan_cycle():
     print_context_summary()
     print_decision_summary()
     print_risk_summary()
+    print_fee_simulation_summary()
     print_reinforcement_summary()
 
     return results
@@ -1089,8 +1208,11 @@ def run_automatic_scanner():
         "Risk and Discipline Manager: PAPER CONTROL"
     )
     print(
+        "Fee-Aware Execution Simulator: SIMULATION ONLY"
+    )
+    print(
         "Learning order: "
-        "SNAPSHOT → SCAN → CONTEXT → DECISION → RISK → "
+        "SNAPSHOT → SCAN → CONTEXT → DECISION → RISK → FEES → "
         "GRADE → HISTORY → INTELLIGENCE → PREDICTIONS"
     )
     print(
