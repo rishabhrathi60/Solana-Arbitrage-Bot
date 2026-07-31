@@ -86,16 +86,21 @@ class ScannerHistoryEvent:
 
     @property
     def normalized_decision(self) -> str:
-        decision = self.decision.upper()
+        decision = self.decision.upper().strip()
 
-        if "EXECUTE" in decision or "TEST FURTHER" in decision:
+        if "TEST FURTHER" in decision or "EXECUTE" in decision:
             return "EXECUTE"
+
         if "WATCH" in decision:
             return "WATCH"
+
         if "SKIP" in decision:
             return "SKIP"
 
-        return decision.strip() or "UNKNOWN"
+        if "QUOTE ERROR" in decision:
+            return "QUOTE_ERROR"
+
+        return "UNKNOWN"
 
     @property
     def gross_profit_check_usd(self) -> float:
@@ -541,15 +546,12 @@ class ScannerHistoryAdapter:
                 f"Event {event.event_id} has negative ending_amount."
             )
 
-        # Failed quote rows are valid historical observations. The scanner may
-        # store ending_amount=0 and zero-valued profit fields when no executable
-        # quote was returned. Those sentinel values must not be subjected to the
-        # successful-quote arithmetic checks, or genuine quote errors would be
-        # incorrectly removed from the research dataset.
+        # Failed quote rows are valid historical observations.
+        # Their monetary values may be scanner sentinel values.
         if not event.quote_successful:
             if not event.error:
                 LOGGER.debug(
-                    "Event %s is marked unsuccessful but contains no error message.",
+                    "Event %s is marked unsuccessful but has no error message.",
                     event.event_id,
                 )
             return
@@ -565,7 +567,9 @@ class ScannerHistoryAdapter:
                 f"calculated={event.gross_profit_check_usd:.12f}"
             )
 
-        net_difference = abs(event.net_profit_usd - event.net_profit_check_usd)
+        net_difference = abs(
+            event.net_profit_usd - event.net_profit_check_usd
+        )
 
         if net_difference > self.arithmetic_tolerance_usd:
             raise InvalidHistoricalRowError(
