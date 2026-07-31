@@ -14,6 +14,11 @@ from database.scanner_results import (
 from database.token_intelligence import (
     refresh_token_intelligence,
 )
+from database.token_predictions import (
+    get_prediction_summary,
+    get_top_predicted_tokens,
+    refresh_token_predictions,
+)
 from execution.paper_trader import paper_trade
 from strategies.multi_token_scanner import (
     MINIMUM_LIQUIDITY_USD,
@@ -27,6 +32,7 @@ ERROR_WAIT_SECONDS = 60
 
 TOP_TOKEN_MINIMUM_SCANS = 3
 TOP_TOKEN_DISPLAY_LIMIT = 5
+TOP_PREDICTION_DISPLAY_LIMIT = 5
 
 
 def current_timestamp():
@@ -37,6 +43,28 @@ def current_timestamp():
     return datetime.now().strftime(
         "%Y-%m-%d %H:%M:%S"
     )
+
+
+def safe_float(value):
+    """
+    Convert a value to float safely.
+    """
+
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def safe_int(value):
+    """
+    Convert a value to integer safely.
+    """
+
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
 
 
 def convert_scanner_result(result):
@@ -77,7 +105,7 @@ def print_historical_summary():
 
     print(
         f"  Scanner cycles: "
-        f"{summary.get('scan_cycles', 0):,}"
+        f"{safe_int(summary.get('scan_cycles')):,}"
     )
 
     print(
@@ -97,7 +125,7 @@ def print_historical_summary():
 
     print(
         f"  Eligible observations: "
-        f"{summary.get('eligible_observations', 0):,}"
+        f"{safe_int(summary.get('eligible_observations')):,}"
     )
 
     print(
@@ -117,7 +145,7 @@ def print_historical_summary():
 
     print(
         f"  Worst net profit: "
-        f"${summary.get('worst_net_profit', 0):.6f}"
+        f"${safe_float(summary.get('worst_net_profit')):.6f}"
     )
 
 
@@ -147,37 +175,24 @@ def print_top_historical_tokens():
         top_tokens,
         start=1,
     ):
-        average_profit = float(
-            token.get(
-                "average_net_profit"
-            )
-            or 0
+        average_profit = safe_float(
+            token.get("average_net_profit")
         )
 
-        best_profit = float(
-            token.get(
-                "best_net_profit"
-            )
-            or 0
+        best_profit = safe_float(
+            token.get("best_net_profit")
         )
 
-        success_rate = float(
-            token.get(
-                "quote_success_rate"
-            )
-            or 0
+        success_rate = safe_float(
+            token.get("quote_success_rate")
         )
 
-        eligible_rate = float(
-            token.get(
-                "eligible_scan_rate"
-            )
-            or 0
+        eligible_rate = safe_float(
+            token.get("eligible_scan_rate")
         )
 
-        total_scans = int(
+        total_scans = safe_int(
             token.get("total_scans")
-            or 0
         )
 
         print(
@@ -188,6 +203,117 @@ def print_top_historical_tokens():
             f"quote success {success_rate:.1f}%, "
             f"eligible {eligible_rate:.1f}%, "
             f"scans {total_scans}"
+        )
+
+
+def print_prediction_summary():
+    """
+    Display overall Prediction Engine statistics.
+    """
+
+    try:
+        summary = get_prediction_summary()
+
+    except Exception as error:
+        print(
+            "\nPrediction summary could not be loaded."
+        )
+        print(error)
+        return
+
+    print("\nToken Prediction Engine summary:")
+
+    print(
+        f"  Predicted tokens: "
+        f"{safe_int(summary.get('total_tokens')):,}"
+    )
+
+    print(
+        "  Average opportunity probability: "
+        f"{safe_float(summary.get('average_opportunity_probability')):.2f}%"
+    )
+
+    print(
+        "  Average expected profit: "
+        f"${safe_float(summary.get('average_expected_profit_usd')):.6f}"
+    )
+
+    print(
+        "  Average prediction confidence: "
+        f"{safe_float(summary.get('average_prediction_confidence')):.2f}/100"
+    )
+
+    print(
+        f"  Average AI priority: "
+        f"{safe_float(summary.get('average_ai_priority')):.2f}/100"
+    )
+
+    print(
+        f"  Highest AI priority: "
+        f"{safe_float(summary.get('highest_ai_priority')):.2f}/100"
+    )
+
+    print(
+        "  Tokens with positive expected profit: "
+        f"{safe_int(summary.get('positive_expected_profit_tokens')):,}"
+    )
+
+    print(
+        f"  Improving tokens: "
+        f"{safe_int(summary.get('improving_tokens')):,}"
+    )
+
+    print(
+        "  Predictions last updated: "
+        f"{summary.get('last_updated_at') or 'Not available'}"
+    )
+
+
+def print_top_predicted_tokens():
+    """
+    Display the highest-priority predicted tokens.
+    """
+
+    try:
+        top_tokens = get_top_predicted_tokens(
+            limit=TOP_PREDICTION_DISPLAY_LIMIT,
+            minimum_confidence=0,
+        )
+
+    except Exception as error:
+        print(
+            "\nTop predictions could not be loaded."
+        )
+        print(error)
+        return
+
+    print("\nTop predicted tokens:")
+
+    if not top_tokens:
+        print(
+            "  No prediction records are available yet."
+        )
+        return
+
+    for position, token in enumerate(
+        top_tokens,
+        start=1,
+    ):
+        print(
+            f"  {position}. "
+            f"{token.get('symbol') or 'UNKNOWN'} — "
+            f"AI priority "
+            f"{safe_float(token.get('ai_priority')):.2f}/100, "
+            f"opportunity "
+            f"{safe_float(token.get('opportunity_probability')):.2f}%, "
+            f"expected profit "
+            f"${safe_float(token.get('expected_profit_usd')):.6f}, "
+            f"trend "
+            f"{safe_float(token.get('trend_score')):.2f}/100, "
+            f"stability "
+            f"{safe_float(token.get('stability_score')):.2f}/100, "
+            f"confidence "
+            f"{safe_float(token.get('prediction_confidence')):.2f}/100"
         )
 
 
@@ -218,9 +344,8 @@ def process_paper_trades(results):
             or "UNKNOWN"
         )
 
-        net_profit = float(
+        net_profit = safe_float(
             result.get("net_profit")
-            or 0
         )
 
         decision = (
@@ -228,15 +353,12 @@ def process_paper_trades(results):
             or "Unknown"
         )
 
-        market_score = float(
+        market_score = safe_float(
             result.get("market_score")
-            or 0
         )
 
-        intelligence_score = float(
-            result.get(
-                "intelligence_score"
-            )
+        intelligence_score = safe_float(
+            result.get("intelligence_score")
             or market_score
         )
 
@@ -276,11 +398,8 @@ def process_paper_trades(results):
 
 def refresh_intelligence_after_cycle():
     """
-    Recalculate token intelligence after the latest
+    Recalculate token intelligence after the newest
     historical observations have been saved.
-
-    The refreshed rankings are used by the next
-    scanner cycle.
     """
 
     print(
@@ -306,8 +425,8 @@ def refresh_intelligence_after_cycle():
         )
         print(error)
 
-        # The scanner cycle still completed successfully.
-        # Existing intelligence rankings remain available.
+        # Existing intelligence and prediction records
+        # remain available for the next scanner cycle.
         return None
 
     print(
@@ -332,6 +451,57 @@ def refresh_intelligence_after_cycle():
     return refresh_result
 
 
+def refresh_predictions_after_cycle():
+    """
+    Refresh token predictions after intelligence
+    has incorporated the newest scan history.
+
+    Prediction refresh failure does not discard a
+    successfully completed scanner cycle.
+    """
+
+    print(
+        "\nRefreshing Token Prediction Engine "
+        "with the newest intelligence records..."
+    )
+
+    try:
+        refresh_result = (
+            refresh_token_predictions()
+        )
+
+    except Exception as error:
+        print(
+            "Token Prediction Engine refresh failed."
+        )
+        print(error)
+
+        # The last successful predictions remain
+        # available in the database.
+        return None
+
+    print(
+        "Token Prediction Engine refreshed."
+    )
+
+    print(
+        "  Intelligence tokens processed: "
+        f"{refresh_result['intelligence_tokens_processed']:,}"
+    )
+
+    print(
+        "  Prediction records saved: "
+        f"{refresh_result['prediction_records_saved']:,}"
+    )
+
+    print(
+        "  Predictions updated at: "
+        f"{refresh_result['updated_at']}"
+    )
+
+    return refresh_result
+
+
 def run_one_scan_cycle():
     """
     Run one complete scanner cycle.
@@ -343,7 +513,9 @@ def run_one_scan_cycle():
     3. Save permanent historical observations.
     4. Save eligible paper trades.
     5. Refresh token intelligence.
-    6. Return results for testing.
+    6. Refresh token predictions.
+    7. Print updated analytics.
+    8. Return results for testing.
     """
 
     scan_time = current_timestamp()
@@ -394,12 +566,25 @@ def run_one_scan_cycle():
         f"{paper_trade_count}"
     )
 
-    # Intelligence must refresh only after the new
-    # historical observations have been stored.
-    refresh_intelligence_after_cycle()
+    intelligence_result = (
+        refresh_intelligence_after_cycle()
+    )
+
+    # Predictions depend on the intelligence table.
+    # Only refresh them when intelligence completed
+    # successfully during this cycle.
+    if intelligence_result is not None:
+        refresh_predictions_after_cycle()
+    else:
+        print(
+            "\nPrediction refresh skipped because "
+            "the intelligence refresh failed."
+        )
 
     print_historical_summary()
     print_top_historical_tokens()
+    print_prediction_summary()
+    print_top_predicted_tokens()
 
     return results
 
@@ -429,12 +614,22 @@ def run_automatic_scanner():
     )
 
     print(
-        "Intelligence learning cycle: "
+        "Token Prediction Engine: ON"
+    )
+
+    print(
+        "Learning order: "
+        "HISTORY → INTELLIGENCE → PREDICTIONS"
+    )
+
+    print(
+        "Prediction refresh: "
         "AFTER EACH COMPLETED SCAN"
     )
 
     print(
-        "Next-cycle intelligent ranking: ON"
+        "Prediction-based scanner ranking: "
+        "NOT ENABLED YET"
     )
 
     print("Press Control + C to stop.")
