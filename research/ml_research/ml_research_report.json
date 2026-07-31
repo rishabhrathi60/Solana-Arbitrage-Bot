@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "generated_at": "2026-07-31T22:39:03.429517+00:00",
+    "schema_version": "11D.1.0",
+    "total_rows": 1297,
+    "total_cycles": 13,
+    "training_rows": 897,
+    "training_cycles": 9,
+    "holdout_rows": 400,
+    "holdout_cycles": 4,
+    "training_positives": 1,
+    "holdout_positives": 2,
+    "models_attempted": 0,
+    "models_completed": 0,
+    "champion_model": null,
+    "champion_status": "BLOCKED_INSUFFICIENT_DATA",
+    "champion_holdout_brier": null,
+    "champion_holdout_balanced_accuracy": null,
+    "promotion_allowed": false,
+    "statistically_sufficient": false,
+    "insufficiency_reasons": [
+      "Too few positive training examples.",
+      "Too few positive holdout examples.",
+      "Fewer than 20 training cycles.",
+      "Fewer than 5 holdout cycles."
+    ]
+  },
+  "configuration": {
+    "training_fraction": 0.7,
+    "minimum_training_rows": 500,
+    "minimum_holdout_rows": 200,
+    "minimum_positive_training_examples": 30,
+    "minimum_negative_training_examples": 100,
+    "minimum_positive_holdout_examples": 10,
+    "random_seed": 42,
+    "probability_threshold": 0.5,
+    "maximum_iterations": 1500,
+    "learning_rate": 0.05,
+    "l2_penalty": 0.01,
+    "enable_sklearn_models": true,
+    "output_directory": "research/ml_research",
+    "overwrite": true
+  },
+  "models": [],
+  "warning": "Research models must not be connected to live execution until the data-sufficiency, walk-forward, Monte Carlo, and risk gates all pass."
+}
