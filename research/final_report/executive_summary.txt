@@ -1,0 +1,68 @@
+PHASE 11E — INSTITUTIONAL RESEARCH REPORT
+========================================================================
+
+Historical Dataset
+------------------------------------------------------------------------
+Events: 1300
+Cycles: 13
+Profitable observations: 3
+Quote errors: 3
+
+Backtest
+------------------------------------------------------------------------
+Trades: 3
+Wins / losses: 0 / 3
+Net profit: $-0.246830
+Maximum drawdown: 0.024683%
+
+Walk-Forward and Monte Carlo
+------------------------------------------------------------------------
+Profitable folds: 0 / 3
+Out-of-sample trades: 9
+Out-of-sample profit: $-0.637556
+Monte Carlo probability below start: 100.00%
+
+Strategy Research
+------------------------------------------------------------------------
+Strongest diagnostic feature: market_score
+Strategy Lab profitable candidates: 0
+Best strategy candidate: None
+Unique regimes: 5
+Strongest / weakest regime: MIXED_OR_NEUTRAL / RISK_OFF_LOW_LIQUIDITY
+
+Machine Learning
+------------------------------------------------------------------------
+Statistically sufficient: False
+Models completed: 0
+Champion model: None
+ML promotion allowed: False
+
+Data Sufficiency
+------------------------------------------------------------------------
+Data sufficient: False
+Blocking failures: 13
+
+FINAL DECISION
+========================================================================
+BLOCK_PROMOTION
+
+One or more blocking research gates failed.
+
+Blocking reasons:
+- Historical evidence remains below hard minimums.
+- Baseline backtest remains unprofitable.
+- Walk-forward out-of-sample profit is not positive.
+- Too few profitable walk-forward folds.
+- Monte Carlo loss probability exceeds 40%.
+- Strategy diagnostics remain statistically weak.
+- Strategy Lab found no profitable candidate.
+- Strategy Lab findings remain statistically weak.
+- ML training is blocked by insufficient class balance or cycles.
+- No ML champion is approved for promotion.
+
+Governance
+------------------------------------------------------------------------
+Live execution enabled: False
+Wallet connection authorized: False
+Automatic model promotion enabled: False
+Automatic strategy promotion enabled: False

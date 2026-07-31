@@ -1,0 +1,83 @@
+{
+  "schema_version": "11E.1.0",
+  "generated_at": "2026-07-31T23:48:52.335438+00:00",
+  "evidence_files": [
+    {
+      "name": "backtest_report",
+      "path": "backtesting/results/backtest_report.json",
+      "exists": true,
+      "size_bytes": 1455,
+      "sha256": "b11b7d420c7c522b9137ad013a55f5d40089e2daad7138a77ad8c973fe7fef5f",
+      "loaded": true,
+      "error": null
+    },
+    {
+      "name": "validation_report",
+      "path": "backtesting/validation_results/validation_report.json",
+      "exists": true,
+      "size_bytes": 8259,
+      "sha256": "bd0972ba253b2d477d862411c696b3d9cfc38e6f36399f0af2ba63aca24c3b5c",
+      "loaded": true,
+      "error": null
+    },
+    {
+      "name": "diagnostics_report",
+      "path": "backtesting/diagnostics/strategy_diagnostics.json",
+      "exists": true,
+      "size_bytes": 44880,
+      "sha256": "6d40b1cd5451c18efd9341593bae895587a31185a67e4be5552c2c2fed47a4b5",
+      "loaded": true,
+      "error": null
+    },
+    {
+      "name": "sufficiency_report",
+      "path": "backtesting/readiness/data_sufficiency_report.json",
+      "exists": true,
+      "size_bytes": 7192,
+      "sha256": "58df57a36a6013ad87b724873f4ca79440dcf3ac26f94a2a4d189b4bcb8e68e8",
+      "loaded": true,
+      "error": null
+    },
+    {
+      "name": "feature_store_metadata",
+      "path": "research/feature_store/feature_store_metadata.json",
+      "exists": true,
+      "size_bytes": 1035,
+      "sha256": "96494324c940389feeaf95e9efb51f3214bfe7d3a35b6d53314cf604a5c22d8a",
+      "loaded": true,
+      "error": null
+    },
+    {
+      "name": "regime_summary",
+      "path": "research/regimes/regime_summary.json",
+      "exists": true,
+      "size_bytes": 3164,
+      "sha256": "3d6e50b707d528b791d508a95b066efcc58b958762c48a9637dbe536c1d1c536",
+      "loaded": true,
+      "error": null
+    },
+    {
+      "name": "strategy_lab_report",
+      "path": "research/strategy_lab/strategy_report.json",
+      "exists": true,
+      "size_bytes": 76248,
+      "sha256": "9994391a8ac4cb250cd95df38797340128359df71872b5fdc4f042ca18359197",
+      "loaded": true,
+      "error": null
+    },
+    {
+      "name": "ml_research_report",
+      "path": "research/ml_research/ml_research_report.json",
+      "exists": true,
+      "size_bytes": 1484,
+      "sha256": "033690a9c102c330bb26a35e6df5cecc63648989e2d4d925527642b7cf8fcb94",
+      "loaded": true,
+      "error": null
+    }
+  ],
+  "outputs": {
+    "institutional_report": "research/final_report/institutional_research_report.json",
+    "executive_summary": "research/final_report/executive_summary.txt",
+    "promotion_decision": "research/final_report/promotion_decision.json"
+  }
+}

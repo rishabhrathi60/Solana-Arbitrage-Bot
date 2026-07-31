@@ -1,0 +1,114 @@
+{
+  "generated_at": "2026-07-31T23:48:52.315924+00:00",
+  "decision": "BLOCK_PROMOTION",
+  "paper_promotion_allowed": false,
+  "live_promotion_allowed": false,
+  "blocking_failures": 10,
+  "passed_checks": 0,
+  "failed_checks": 10,
+  "primary_reason": "One or more blocking research gates failed.",
+  "supporting_reasons": [
+    "Historical evidence remains below hard minimums.",
+    "Baseline backtest remains unprofitable.",
+    "Walk-forward out-of-sample profit is not positive.",
+    "Too few profitable walk-forward folds.",
+    "Monte Carlo loss probability exceeds 40%.",
+    "Strategy diagnostics remain statistically weak.",
+    "Strategy Lab found no profitable candidate.",
+    "Strategy Lab findings remain statistically weak.",
+    "ML training is blocked by insufficient class balance or cycles.",
+    "No ML champion is approved for promotion."
+  ],
+  "checks": [
+    {
+      "code": "DATA_SUFFICIENCY",
+      "description": "Data sufficiency gate passed",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "required": true,
+      "reason": "Historical evidence remains below hard minimums."
+    },
+    {
+      "code": "BACKTEST_PROFIT",
+      "description": "Baseline backtest profit is positive",
+      "passed": false,
+      "blocking": true,
+      "observed": -0.24682973305857558,
+      "required": "> 0.0",
+      "reason": "Baseline backtest remains unprofitable."
+    },
+    {
+      "code": "OUT_OF_SAMPLE_PROFIT",
+      "description": "Aggregate out-of-sample profit is positive",
+      "passed": false,
+      "blocking": true,
+      "observed": -0.6375559121003107,
+      "required": "> 0.0",
+      "reason": "Walk-forward out-of-sample profit is not positive."
+    },
+    {
+      "code": "PROFITABLE_FOLDS",
+      "description": "At least three walk-forward folds are profitable",
+      "passed": false,
+      "blocking": true,
+      "observed": 0.0,
+      "required": ">= 3.0",
+      "reason": "Too few profitable walk-forward folds."
+    },
+    {
+      "code": "MONTE_CARLO_LOSS_PROBABILITY",
+      "description": "Monte Carlo loss probability is no greater than 40%",
+      "passed": false,
+      "blocking": true,
+      "observed": 1.0,
+      "required": "<= 0.4",
+      "reason": "Monte Carlo loss probability exceeds 40%."
+    },
+    {
+      "code": "DIAGNOSTICS_STRENGTH",
+      "description": "Strategy diagnostics are statistically credible",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "required": true,
+      "reason": "Strategy diagnostics remain statistically weak."
+    },
+    {
+      "code": "STRATEGY_CANDIDATES",
+      "description": "Strategy Lab found a profitable candidate",
+      "passed": false,
+      "blocking": true,
+      "observed": 0.0,
+      "required": ">= 1.0",
+      "reason": "Strategy Lab found no profitable candidate."
+    },
+    {
+      "code": "STRATEGY_LAB_STRENGTH",
+      "description": "Strategy Lab evidence is statistically credible",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "required": true,
+      "reason": "Strategy Lab findings remain statistically weak."
+    },
+    {
+      "code": "ML_DATA_SUFFICIENCY",
+      "description": "ML dataset is statistically sufficient",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "required": true,
+      "reason": "ML training is blocked by insufficient class balance or cycles."
+    },
+    {
+      "code": "ML_PROMOTION",
+      "description": "ML champion passed promotion checks",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "required": true,
+      "reason": "No ML champion is approved for promotion."
+    }
+  ]
+}
