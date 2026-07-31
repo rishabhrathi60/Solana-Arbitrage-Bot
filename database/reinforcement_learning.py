@@ -1585,6 +1585,850 @@ def get_reinforcement_summary():
     }
 
 
+# =========================================================
+# Composite fitness upgrade
+# =========================================================
+
+COMPOSITE_PROFIT_WEIGHT = 0.30
+COMPOSITE_RANKING_WEIGHT = 0.20
+COMPOSITE_ACCURACY_WEIGHT = 0.20
+COMPOSITE_CALIBRATION_WEIGHT = 0.15
+COMPOSITE_STABILITY_WEIGHT = 0.10
+COMPOSITE_RISK_WEIGHT = 0.05
+
+_legacy_initialize_reinforcement_learning = (
+    initialize_reinforcement_learning
+)
+
+
+def _table_columns(cursor, table_name):
+    cursor.execute(
+        f"PRAGMA table_info({table_name})"
+    )
+    return {
+        row[1]
+        for row in cursor.fetchall()
+    }
+
+
+def _add_missing_columns(
+    cursor,
+    table_name,
+    definitions,
+):
+    existing = _table_columns(
+        cursor,
+        table_name,
+    )
+
+    for column_name, definition in definitions.items():
+        if column_name in existing:
+            continue
+
+        cursor.execute(
+            f"""
+            ALTER TABLE {table_name}
+            ADD COLUMN {column_name} {definition}
+            """
+        )
+
+
+def initialize_reinforcement_learning():
+    """
+    Initialize the original controller and migrate it to the
+    composite-fitness schema without deleting prior learning.
+    """
+
+    _legacy_initialize_reinforcement_learning()
+
+    connection = get_database_connection()
+    cursor = connection.cursor()
+
+    try:
+        _add_missing_columns(
+            cursor,
+            "reinforcement_models",
+            {
+                "classification_accuracy":
+                    "REAL NOT NULL DEFAULT 0",
+                "average_brier_score":
+                    "REAL NOT NULL DEFAULT 1",
+                "reward_stability_score":
+                    "REAL NOT NULL DEFAULT 0",
+                "profit_component":
+                    "REAL NOT NULL DEFAULT 0",
+                "ranking_component":
+                    "REAL NOT NULL DEFAULT 0",
+                "accuracy_component":
+                    "REAL NOT NULL DEFAULT 0",
+                "calibration_component":
+                    "REAL NOT NULL DEFAULT 0",
+                "stability_component":
+                    "REAL NOT NULL DEFAULT 0",
+                "risk_component":
+                    "REAL NOT NULL DEFAULT 0",
+            },
+        )
+
+        _add_missing_columns(
+            cursor,
+            "reinforcement_cycle_evaluations",
+            {
+                "classification_correct":
+                    "INTEGER NOT NULL DEFAULT 0",
+                "classification_accuracy":
+                    "REAL NOT NULL DEFAULT 0",
+                "brier_score":
+                    "REAL NOT NULL DEFAULT 1",
+                "reward_standard_deviation":
+                    "REAL NOT NULL DEFAULT 0",
+                "composite_fitness":
+                    "REAL NOT NULL DEFAULT 0",
+            },
+        )
+
+        connection.commit()
+
+    finally:
+        connection.close()
+
+
+def row_to_model(row):
+    """
+    Convert a model row while supporting both legacy and upgraded
+    composite-fitness columns.
+    """
+
+    if not row:
+        return None
+
+    model = dict(row)
+
+    float_keys = (
+        *COMPONENT_WEIGHT_KEYS,
+        "risk_penalty_weight",
+        "intelligence_confidence_weight",
+        "prediction_confidence_weight",
+        "exploration_ratio",
+        "average_reward",
+        "average_realized_profit",
+        "false_positive_rate",
+        "profitable_hit_rate",
+        "maximum_drawdown_usd",
+        "fitness_score",
+        "classification_accuracy",
+        "average_brier_score",
+        "reward_stability_score",
+        "profit_component",
+        "ranking_component",
+        "accuracy_component",
+        "calibration_component",
+        "stability_component",
+        "risk_component",
+    )
+
+    for key in float_keys:
+        model[key] = safe_float(
+            model.get(key)
+        )
+
+    for key in (
+        "model_id",
+        "evaluation_cycles",
+        "evaluation_observations",
+    ):
+        model[key] = safe_int(
+            model.get(key)
+        )
+
+    return model
+
+
+def _standard_deviation(values):
+    if len(values) < 2:
+        return 0.0
+
+    average = sum(values) / len(values)
+
+    variance = sum(
+        (value - average) ** 2
+        for value in values
+    ) / len(values)
+
+    return math.sqrt(variance)
+
+
+def _normalized_profit_component(value):
+    """
+    Convert average realized cycle profit to a bounded -1..1 score.
+    """
+
+    return math.tanh(
+        safe_float(value) / 0.05
+    )
+
+
+def _normalized_ranking_component(value):
+    """
+    Convert top-quartile ranking lift to a bounded -1..1 score.
+    """
+
+    return math.tanh(
+        safe_float(value) / 0.01
+    )
+
+
+def evaluate_model_on_cycle(
+    model,
+    results,
+):
+    """
+    Evaluate ranking quality, realized profit, classification,
+    calibration, stability and drawdown for one completed cycle.
+    """
+
+    scored_results = []
+
+    for result in results:
+        score = calculate_model_score(
+            model,
+            result,
+        )
+
+        quote_successful = bool(
+            result.get("quote_successful")
+            or (
+                result.get("decision")
+                != "⚠️ QUOTE ERROR"
+            )
+        )
+
+        profit = safe_float(
+            result.get("net_profit")
+        )
+
+        actual_profitable = int(
+            quote_successful
+            and profit > 0
+        )
+
+        predicted_probability = (
+            clamp(score, 0, 100) / 100.0
+        )
+
+        predicted_positive = int(
+            score >= 60.0
+        )
+
+        reward = calculate_realized_reward(
+            result
+        )
+
+        scored_results.append(
+            {
+                "score": score,
+                "reward": reward,
+                "profit": profit,
+                "quote_successful": (
+                    quote_successful
+                ),
+                "actual_profitable": (
+                    actual_profitable
+                ),
+                "classification_correct": int(
+                    predicted_positive
+                    == actual_profitable
+                ),
+                "brier_score": (
+                    predicted_probability
+                    - actual_profitable
+                ) ** 2,
+            }
+        )
+
+    if not scored_results:
+        return None
+
+    scored_results.sort(
+        key=lambda item: item["score"],
+        reverse=True,
+    )
+
+    observations = len(scored_results)
+    top_count = max(
+        1,
+        math.ceil(
+            observations * 0.25
+        ),
+    )
+
+    top_group = scored_results[
+        :top_count
+    ]
+
+    successful_items = [
+        item
+        for item in scored_results
+        if item["quote_successful"]
+    ]
+
+    successful_top_items = [
+        item
+        for item in top_group
+        if item["quote_successful"]
+    ]
+
+    whole_batch_profit = sum(
+        item["profit"]
+        for item in successful_items
+    )
+
+    top_quartile_profit = sum(
+        item["profit"]
+        for item in successful_top_items
+    )
+
+    whole_average = (
+        whole_batch_profit
+        / max(1, len(successful_items))
+    )
+
+    top_average = (
+        top_quartile_profit
+        / max(1, len(successful_top_items))
+    )
+
+    ranking_lift = (
+        top_average - whole_average
+    )
+
+    successful_quotes = len(
+        successful_items
+    )
+
+    profitable_quotes = sum(
+        item["actual_profitable"]
+        for item in scored_results
+    )
+
+    high_score_results = [
+        item
+        for item in scored_results
+        if item["score"] >= 60.0
+    ]
+
+    false_positives = sum(
+        item["quote_successful"]
+        and item["profit"] <= 0
+        for item in high_score_results
+    )
+
+    false_positive_rate = (
+        false_positives
+        / len(high_score_results)
+        * 100.0
+        if high_score_results
+        else 0.0
+    )
+
+    running_profit = 0.0
+    peak_profit = 0.0
+    maximum_drawdown = 0.0
+
+    for item in scored_results:
+        if not item["quote_successful"]:
+            continue
+
+        running_profit += item["profit"]
+        peak_profit = max(
+            peak_profit,
+            running_profit,
+        )
+        maximum_drawdown = max(
+            maximum_drawdown,
+            peak_profit - running_profit,
+        )
+
+    weighted_rewards = [
+        item["reward"]
+        * (
+            0.25
+            + item["score"] / 100.0
+        )
+        for item in scored_results
+    ]
+
+    average_reward = (
+        sum(weighted_rewards)
+        / observations
+    )
+
+    reward_standard_deviation = (
+        _standard_deviation(
+            weighted_rewards
+        )
+    )
+
+    classification_correct = sum(
+        item["classification_correct"]
+        for item in scored_results
+    )
+
+    classification_accuracy = (
+        classification_correct
+        / observations
+        * 100.0
+    )
+
+    average_brier_score = (
+        sum(
+            item["brier_score"]
+            for item in scored_results
+        )
+        / observations
+    )
+
+    profit_component = (
+        _normalized_profit_component(
+            whole_average
+        )
+    )
+
+    ranking_component = (
+        _normalized_ranking_component(
+            ranking_lift
+        )
+    )
+
+    accuracy_component = (
+        classification_accuracy
+        / 100.0
+    )
+
+    calibration_component = clamp(
+        1.0 - average_brier_score,
+        0.0,
+        1.0,
+    )
+
+    stability_component = clamp(
+        1.0
+        - reward_standard_deviation / 2.0,
+        0.0,
+        1.0,
+    )
+
+    risk_component = clamp(
+        1.0
+        - maximum_drawdown
+        / max(
+            MAXIMUM_ACCEPTABLE_DRAWDOWN_USD,
+            0.000001,
+        ),
+        0.0,
+        1.0,
+    )
+
+    composite_fitness = (
+        profit_component
+        * COMPOSITE_PROFIT_WEIGHT
+        + ranking_component
+        * COMPOSITE_RANKING_WEIGHT
+        + accuracy_component
+        * COMPOSITE_ACCURACY_WEIGHT
+        + calibration_component
+        * COMPOSITE_CALIBRATION_WEIGHT
+        + stability_component
+        * COMPOSITE_STABILITY_WEIGHT
+        + risk_component
+        * COMPOSITE_RISK_WEIGHT
+    )
+
+    cycle_reward = (
+        average_reward
+        + composite_fitness
+        - false_positive_rate / 500.0
+    )
+
+    return {
+        "observations": observations,
+        "successful_quotes": (
+            successful_quotes
+        ),
+        "profitable_quotes": (
+            profitable_quotes
+        ),
+        "false_positives": (
+            false_positives
+        ),
+        "false_positive_rate": (
+            false_positive_rate
+        ),
+        "cycle_realized_profit": (
+            whole_batch_profit
+        ),
+        "cycle_reward": cycle_reward,
+        "top_quartile_profit": (
+            top_quartile_profit
+        ),
+        "whole_batch_profit": (
+            whole_batch_profit
+        ),
+        "ranking_lift": ranking_lift,
+        "drawdown_usd": (
+            maximum_drawdown
+        ),
+        "classification_correct": (
+            classification_correct
+        ),
+        "classification_accuracy": (
+            classification_accuracy
+        ),
+        "brier_score": (
+            average_brier_score
+        ),
+        "reward_standard_deviation": (
+            reward_standard_deviation
+        ),
+        "composite_fitness": (
+            composite_fitness
+        ),
+    }
+
+
+def save_cycle_evaluation(
+    cycle_id,
+    model,
+    evaluation,
+):
+    """
+    Persist one upgraded shadow evaluation and rebuild cumulative
+    model statistics from all stored evaluation cycles.
+    """
+
+    if not evaluation:
+        return False
+
+    initialize_reinforcement_learning()
+
+    connection = get_database_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            """
+            INSERT OR IGNORE INTO
+            reinforcement_cycle_evaluations (
+                cycle_id,
+                model_id,
+                observations,
+                successful_quotes,
+                profitable_quotes,
+                false_positives,
+                cycle_realized_profit,
+                cycle_reward,
+                top_quartile_profit,
+                whole_batch_profit,
+                ranking_lift,
+                drawdown_usd,
+                classification_correct,
+                classification_accuracy,
+                brier_score,
+                reward_standard_deviation,
+                composite_fitness,
+                evaluated_at
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            (
+                cycle_id,
+                model["model_id"],
+                evaluation["observations"],
+                evaluation[
+                    "successful_quotes"
+                ],
+                evaluation[
+                    "profitable_quotes"
+                ],
+                evaluation[
+                    "false_positives"
+                ],
+                evaluation[
+                    "cycle_realized_profit"
+                ],
+                evaluation["cycle_reward"],
+                evaluation[
+                    "top_quartile_profit"
+                ],
+                evaluation[
+                    "whole_batch_profit"
+                ],
+                evaluation["ranking_lift"],
+                evaluation["drawdown_usd"],
+                evaluation[
+                    "classification_correct"
+                ],
+                evaluation[
+                    "classification_accuracy"
+                ],
+                evaluation["brier_score"],
+                evaluation[
+                    "reward_standard_deviation"
+                ],
+                evaluation[
+                    "composite_fitness"
+                ],
+                current_timestamp(),
+            ),
+        )
+
+        inserted = cursor.rowcount > 0
+
+        if not inserted:
+            connection.commit()
+            return False
+
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*) AS cycles,
+                COALESCE(
+                    SUM(observations),
+                    0
+                ) AS observations,
+                COALESCE(
+                    SUM(cycle_reward),
+                    0
+                ) AS cumulative_reward,
+                COALESCE(
+                    AVG(cycle_reward),
+                    0
+                ) AS average_reward,
+                COALESCE(
+                    SUM(cycle_realized_profit),
+                    0
+                ) AS cumulative_profit,
+                COALESCE(
+                    AVG(cycle_realized_profit),
+                    0
+                ) AS average_profit,
+                COALESCE(
+                    SUM(false_positives)
+                    * 100.0
+                    / NULLIF(
+                        SUM(observations),
+                        0
+                    ),
+                    0
+                ) AS false_positive_rate,
+                COALESCE(
+                    SUM(profitable_quotes)
+                    * 100.0
+                    / NULLIF(
+                        SUM(successful_quotes),
+                        0
+                    ),
+                    0
+                ) AS profitable_hit_rate,
+                COALESCE(
+                    MAX(drawdown_usd),
+                    0
+                ) AS maximum_drawdown,
+                COALESCE(
+                    SUM(classification_correct)
+                    * 100.0
+                    / NULLIF(
+                        SUM(observations),
+                        0
+                    ),
+                    0
+                ) AS classification_accuracy,
+                COALESCE(
+                    AVG(brier_score),
+                    1
+                ) AS average_brier_score,
+                COALESCE(
+                    AVG(
+                        reward_standard_deviation
+                    ),
+                    0
+                ) AS reward_std,
+                COALESCE(
+                    AVG(ranking_lift),
+                    0
+                ) AS average_ranking_lift
+            FROM reinforcement_cycle_evaluations
+            WHERE model_id = ?
+            """,
+            (model["model_id"],),
+        )
+
+        totals = cursor.fetchone()
+
+        average_profit = safe_float(
+            totals["average_profit"]
+        )
+
+        classification_accuracy = (
+            safe_float(
+                totals[
+                    "classification_accuracy"
+                ]
+            )
+        )
+
+        average_brier_score = safe_float(
+            totals["average_brier_score"]
+        )
+
+        reward_std = safe_float(
+            totals["reward_std"]
+        )
+
+        maximum_drawdown = safe_float(
+            totals["maximum_drawdown"]
+        )
+
+        profit_component = (
+            _normalized_profit_component(
+                average_profit
+            )
+        )
+
+        ranking_component = (
+            _normalized_ranking_component(
+                totals["average_ranking_lift"]
+            )
+        )
+
+        accuracy_component = (
+            classification_accuracy
+            / 100.0
+        )
+
+        calibration_component = clamp(
+            1.0 - average_brier_score,
+            0.0,
+            1.0,
+        )
+
+        stability_component = clamp(
+            1.0 - reward_std / 2.0,
+            0.0,
+            1.0,
+        )
+
+        risk_component = clamp(
+            1.0
+            - maximum_drawdown
+            / max(
+                MAXIMUM_ACCEPTABLE_DRAWDOWN_USD,
+                0.000001,
+            ),
+            0.0,
+            1.0,
+        )
+
+        fitness_score = (
+            profit_component
+            * COMPOSITE_PROFIT_WEIGHT
+            + ranking_component
+            * COMPOSITE_RANKING_WEIGHT
+            + accuracy_component
+            * COMPOSITE_ACCURACY_WEIGHT
+            + calibration_component
+            * COMPOSITE_CALIBRATION_WEIGHT
+            + stability_component
+            * COMPOSITE_STABILITY_WEIGHT
+            + risk_component
+            * COMPOSITE_RISK_WEIGHT
+        )
+
+        cursor.execute(
+            """
+            UPDATE reinforcement_models
+            SET
+                evaluation_cycles = ?,
+                evaluation_observations = ?,
+                cumulative_reward = ?,
+                average_reward = ?,
+                cumulative_realized_profit = ?,
+                average_realized_profit = ?,
+                false_positive_rate = ?,
+                profitable_hit_rate = ?,
+                maximum_drawdown_usd = ?,
+                classification_accuracy = ?,
+                average_brier_score = ?,
+                reward_stability_score = ?,
+                profit_component = ?,
+                ranking_component = ?,
+                accuracy_component = ?,
+                calibration_component = ?,
+                stability_component = ?,
+                risk_component = ?,
+                fitness_score = ?,
+                updated_at = ?
+            WHERE model_id = ?
+            """,
+            (
+                safe_int(totals["cycles"]),
+                safe_int(
+                    totals["observations"]
+                ),
+                safe_float(
+                    totals[
+                        "cumulative_reward"
+                    ]
+                ),
+                safe_float(
+                    totals["average_reward"]
+                ),
+                safe_float(
+                    totals[
+                        "cumulative_profit"
+                    ]
+                ),
+                average_profit,
+                safe_float(
+                    totals[
+                        "false_positive_rate"
+                    ]
+                ),
+                safe_float(
+                    totals[
+                        "profitable_hit_rate"
+                    ]
+                ),
+                maximum_drawdown,
+                classification_accuracy,
+                average_brier_score,
+                stability_component * 100.0,
+                profit_component,
+                ranking_component,
+                accuracy_component,
+                calibration_component,
+                stability_component,
+                risk_component,
+                fitness_score,
+                current_timestamp(),
+                model["model_id"],
+            ),
+        )
+
+        connection.commit()
+        return True
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        connection.close()
+
+
 if __name__ == "__main__":
     initialize_reinforcement_learning()
 

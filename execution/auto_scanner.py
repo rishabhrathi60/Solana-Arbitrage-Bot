@@ -6,6 +6,15 @@ import requests
 from database.ai_ranking import (
     refresh_ai_rankings,
 )
+from database.context_engine import (
+    get_context_summary,
+    save_context,
+)
+from database.decision_engine import (
+    evaluate_decisions,
+    get_decision_summary,
+    get_top_decisions,
+)
 from database.opportunity_history import (
     get_opportunity_history_summary,
     get_top_opportunity_tokens,
@@ -330,6 +339,96 @@ def print_prediction_accuracy_summary():
             )
 
 
+def print_context_summary():
+    try:
+        summary = get_context_summary()
+    except Exception as error:
+        print(
+            "\nMarket Context summary unavailable."
+        )
+        print(error)
+        return
+
+    print("\nMarket Context Engine summary:")
+    print(
+        "  Recorded cycles: "
+        f"{safe_int(summary.get('total_cycles')):,}"
+    )
+    print(
+        "  Average market quality: "
+        f"{safe_float(summary.get('avg_market_quality')):.2f}/100"
+    )
+    print(
+        "  Average cycle profit: "
+        f"${safe_float(summary.get('avg_profit')):.6f}"
+    )
+    print(
+        "  Average quote success: "
+        f"{safe_float(summary.get('avg_success')):.2f}%"
+    )
+    print(
+        "  Average scanner speed: "
+        f"{safe_float(summary.get('avg_speed')):.2f} tokens/minute"
+    )
+
+
+def print_decision_summary():
+    try:
+        summary = get_decision_summary()
+        top_decisions = get_top_decisions(
+            limit=5
+        )
+    except Exception as error:
+        print(
+            "\nDecision Engine summary unavailable."
+        )
+        print(error)
+        return
+
+    print("\nDecision Engine summary:")
+    print(
+        "  Operating mode: PAPER DECISION AUDIT"
+    )
+    print(
+        "  Total decisions: "
+        f"{safe_int(summary.get('total_decisions')):,}"
+    )
+    print(
+        "  EXECUTE / WATCH / SKIP: "
+        f"{safe_int(summary.get('execute_decisions')):,} / "
+        f"{safe_int(summary.get('watch_decisions')):,} / "
+        f"{safe_int(summary.get('skip_decisions')):,}"
+    )
+    print(
+        "  Average decision score: "
+        f"{safe_float(summary.get('average_decision_score')):.2f}/100"
+    )
+    print(
+        "  EXECUTE profitable rate: "
+        f"{safe_float(summary.get('execute_profitable_rate')):.2f}%"
+    )
+    print(
+        "  EXECUTE average profit: "
+        f"${safe_float(summary.get('execute_average_profit')):.6f}"
+    )
+
+    if top_decisions:
+        print("  Top audited decisions:")
+
+        for decision in top_decisions:
+            print(
+                "    "
+                f"{decision.get('symbol') or 'UNKNOWN'} — "
+                f"{decision.get('recommendation')} — "
+                f"score "
+                f"{safe_float(decision.get('decision_score')):.2f}/100, "
+                f"votes "
+                f"{safe_int(decision.get('votes_for_execute'))}/"
+                f"{safe_int(decision.get('votes_total'))}, "
+                f"expected "
+                f"${safe_float(decision.get('expected_profit_usd')):.6f}"
+            )
+
 def process_paper_trades(results):
     successful_results = [
         result
@@ -379,6 +478,17 @@ def process_paper_trades(results):
         )
 
         if not result.get("eligible"):
+            continue
+
+        if (
+            result.get("final_recommendation")
+            != "EXECUTE"
+        ):
+            print(
+                "PAPER TRADE BLOCKED BY DECISION ENGINE: "
+                f"{token} — "
+                f"{result.get('final_recommendation') or 'SKIP'}"
+            )
             continue
 
         saved_trade = paper_trade(
@@ -630,6 +740,7 @@ def run_one_scan_cycle():
 
     scan_time = current_timestamp()
     cycle_id = scan_time
+    cycle_started_at = time.perf_counter()
 
     print(
         f"[{scan_time}] Capturing pre-scan predictions..."
@@ -681,6 +792,52 @@ def run_one_scan_cycle():
         "Historical scanner observations saved: "
         f"{history_saved_count} rows."
     )
+
+    elapsed_seconds = max(
+        0.001,
+        time.perf_counter()
+        - cycle_started_at,
+    )
+
+    try:
+        save_context(
+            results,
+            elapsed_seconds,
+        )
+
+        print(
+            "Market context snapshot saved."
+        )
+
+    except Exception as error:
+        print(
+            "Market context snapshot failed."
+        )
+        print(error)
+
+    try:
+        decision_result = evaluate_decisions(
+            results=results,
+            cycle_id=cycle_id,
+        )
+
+        print(
+            "Decision Engine completed: "
+            f"{decision_result['execute']} EXECUTE, "
+            f"{decision_result['watch']} WATCH, "
+            f"{decision_result['skip']} SKIP."
+        )
+
+    except Exception as error:
+        print(
+            "Decision Engine evaluation failed."
+        )
+        print(error)
+
+        for result in results:
+            result[
+                "final_recommendation"
+            ] = "SKIP"
 
     if snapshot_id:
         try:
@@ -765,6 +922,8 @@ def run_one_scan_cycle():
     print_prediction_summary()
     print_top_predicted_tokens()
     print_prediction_accuracy_summary()
+    print_context_summary()
+    print_decision_summary()
     print_reinforcement_summary()
 
     return results
@@ -793,9 +952,15 @@ def run_automatic_scanner():
         "Prediction Accuracy Engine: ON"
     )
     print(
+        "Market Context Engine: ON"
+    )
+    print(
+        "Decision Engine: PAPER AUDIT"
+    )
+    print(
         "Learning order: "
-        "SNAPSHOT → SCAN → GRADE → HISTORY → "
-        "INTELLIGENCE → PREDICTIONS"
+        "SNAPSHOT → SCAN → CONTEXT → DECISION → GRADE → "
+        "HISTORY → INTELLIGENCE → PREDICTIONS"
     )
     print(
         "AI opportunity ranking: ON"
