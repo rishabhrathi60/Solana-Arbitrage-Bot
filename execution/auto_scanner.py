@@ -33,6 +33,11 @@ from database.reinforcement_learning import (
     get_reinforcement_summary,
     run_reinforcement_cycle,
 )
+from database.risk_manager import (
+    evaluate_cycle_risk,
+    get_risk_summary,
+    record_trade_outcome,
+)
 from database.scanner_results import (
     save_scanner_results,
 )
@@ -429,7 +434,62 @@ def print_decision_summary():
                 f"${safe_float(decision.get('expected_profit_usd')):.6f}"
             )
 
-def process_paper_trades(results):
+def print_risk_summary():
+    try:
+        summary = get_risk_summary()
+    except Exception as error:
+        print(
+            "\nRisk and Discipline summary unavailable."
+        )
+        print(error)
+        return
+
+    lifetime = summary.get("lifetime") or {}
+    daily = summary.get("daily") or {}
+
+    print("\nRisk and Discipline Manager summary:")
+    print(
+        "  Operating mode: PAPER RISK CONTROL"
+    )
+    print(
+        "  Current paper capital: "
+        f"${safe_float(lifetime.get('current_capital_usd')):.2f}"
+    )
+    print(
+        "  Lifetime profit: "
+        f"${safe_float(lifetime.get('lifetime_profit_usd')):.6f}"
+    )
+    print(
+        "  Consecutive losses: "
+        f"{safe_int(lifetime.get('consecutive_losses'))}"
+    )
+    print(
+        "  Emergency stop: "
+        f"{bool(safe_int(lifetime.get('emergency_stop')))}"
+    )
+    print(
+        "  Trades today: "
+        f"{safe_int(daily.get('trades_taken'))}"
+    )
+    print(
+        "  Daily realized profit: "
+        f"${safe_float(daily.get('realized_profit_usd')):.6f}"
+    )
+    print(
+        "  Daily maximum drawdown: "
+        f"${safe_float(daily.get('maximum_drawdown_usd')):.6f}"
+    )
+    print(
+        "  Risk approvals / blocks: "
+        f"{safe_int(summary.get('approved')):,} / "
+        f"{safe_int(summary.get('blocked')):,}"
+    )
+    print(
+        "  Average process score: "
+        f"{safe_float(summary.get('average_process_score')):.2f}/100"
+    )
+
+def process_paper_trades(results, cycle_id):
     successful_results = [
         result
         for result in results
@@ -491,6 +551,27 @@ def process_paper_trades(results):
             )
             continue
 
+        if not bool(
+            result.get("risk_approved")
+        ):
+            reasons = (
+                result.get(
+                    "risk_blocked_reasons"
+                )
+                or []
+            )
+
+            print(
+                "PAPER TRADE BLOCKED BY RISK MANAGER: "
+                f"{token} — "
+                + (
+                    "; ".join(reasons)
+                    if reasons
+                    else "Risk approval missing."
+                )
+            )
+            continue
+
         saved_trade = paper_trade(
             convert_scanner_result(result)
         )
@@ -501,6 +582,23 @@ def process_paper_trades(results):
             f"profit "
             f"${saved_trade['profit']:.6f}"
         )
+
+        try:
+            record_trade_outcome(
+                cycle_id=cycle_id,
+                result=result,
+                actual_profit_usd=(
+                    safe_float(
+                        saved_trade.get("profit")
+                    )
+                ),
+            )
+
+        except Exception as error:
+            print(
+                "Risk outcome recording failed."
+            )
+            print(error)
 
         paper_trade_count += 1
 
@@ -839,6 +937,32 @@ def run_one_scan_cycle():
                 "final_recommendation"
             ] = "SKIP"
 
+    try:
+        risk_result = evaluate_cycle_risk(
+            results=results,
+            cycle_id=cycle_id,
+        )
+
+        print(
+            "Risk and Discipline Manager completed: "
+            f"{risk_result['approved']} approved, "
+            f"{risk_result['blocked']} blocked."
+        )
+
+    except Exception as error:
+        print(
+            "Risk and Discipline evaluation failed."
+        )
+        print(error)
+
+        for result in results:
+            result["risk_approved"] = 0
+            result[
+                "risk_blocked_reasons"
+            ] = [
+                "Risk engine failure."
+            ]
+
     if snapshot_id:
         try:
             accuracy_result = (
@@ -870,7 +994,10 @@ def run_one_scan_cycle():
         )
 
     paper_trade_count = (
-        process_paper_trades(results)
+        process_paper_trades(
+            results,
+            cycle_id,
+        )
     )
 
     print(
@@ -924,6 +1051,7 @@ def run_one_scan_cycle():
     print_prediction_accuracy_summary()
     print_context_summary()
     print_decision_summary()
+    print_risk_summary()
     print_reinforcement_summary()
 
     return results
@@ -958,9 +1086,12 @@ def run_automatic_scanner():
         "Decision Engine: PAPER AUDIT"
     )
     print(
+        "Risk and Discipline Manager: PAPER CONTROL"
+    )
+    print(
         "Learning order: "
-        "SNAPSHOT → SCAN → CONTEXT → DECISION → GRADE → "
-        "HISTORY → INTELLIGENCE → PREDICTIONS"
+        "SNAPSHOT → SCAN → CONTEXT → DECISION → RISK → "
+        "GRADE → HISTORY → INTELLIGENCE → PREDICTIONS"
     )
     print(
         "AI opportunity ranking: ON"
