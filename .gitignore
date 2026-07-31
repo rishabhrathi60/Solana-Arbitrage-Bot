@@ -9,3 +9,7 @@ wallet.json
 *.log
 # Generated backtesting exports
 backtesting/exports/
+
+# Generated feature-store data
+research/feature_store/features.csv
+research/feature_store/features.jsonl
