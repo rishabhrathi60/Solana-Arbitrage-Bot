@@ -1,6 +1,8 @@
 import time
 from datetime import datetime
-
+from database.pattern_learning import (
+    update_learning,
+)
 import requests
 
 from database.opportunity_history import (
@@ -554,7 +556,11 @@ def run_one_scan_cycle():
         "Historical scanner observations saved: "
         f"{history_saved_count} rows."
     )
+    update_learning(results)
 
+    print(
+        "Pattern learning database updated."
+    )
     paper_trade_count = (
         process_paper_trades(
             results
