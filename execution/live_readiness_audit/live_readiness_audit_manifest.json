@@ -1,0 +1,113 @@
+{
+  "schema_version": "14D.1.0",
+  "generated_at": "2026-08-01T05:36:58.623+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T05:36:58.612+00:00",
+    "schema_version": "14D.1.0",
+    "operating_mode": "SECURITY_AUDIT_ONLY",
+    "repository_root": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot",
+    "files_scanned": 3,
+    "secret_findings": 13,
+    "critical_secret_findings": 0,
+    "wallet_findings": 7,
+    "wallet_findings_passed": 7,
+    "kill_switch_findings": 6,
+    "kill_switch_findings_passed": 6,
+    "gate_checks": 9,
+    "gate_checks_passed": 6,
+    "blocking_failures": 3,
+    "blocking_reasons": [
+      "Phase 13F institutional live readiness remains blocked.",
+      "Phase 14A operational shadow gate remains blocked.",
+      "Phase 14B edge decomposition remains blocked."
+    ],
+    "security_audit_passed": false,
+    "final_decision": "BLOCK_LIVE_EXECUTION",
+    "upstream": {
+      "phase_13f_live_readiness_allowed": false,
+      "phase_14a_operational_gate_passed": false,
+      "phase_14b_diagnostics_passed": false,
+      "phase_14c_resilience_passed": true
+    },
+    "safety": {
+      "wallet_connected": false,
+      "private_key_loaded": false,
+      "transaction_signing_enabled": false,
+      "transaction_broadcasting_enabled": false,
+      "live_execution_enabled": false,
+      "automatic_promotion_enabled": false,
+      "manual_approval_required": true
+    },
+    "valid": true
+  },
+  "inputs": {
+    "promotion_decision": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json",
+      "exists": true,
+      "bytes": 853,
+      "sha256": "2f1d58be1377f1aec6a6cdd091035e42a31369894373c175b2cc68c851d6ac78"
+    },
+    "shadow_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+      "exists": true,
+      "bytes": 6949,
+      "sha256": "94d4761a2f20016328a06cd79ea89688f6a21d4280aea5ff59e6f64ef77a58af"
+    },
+    "diagnostics_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_execution_diagnostics_report.json",
+      "exists": true,
+      "bytes": 4007,
+      "sha256": "14d025aefe6ffedc3422fe92430b3ede67c0e598b902236c3a421ccac5843818"
+    },
+    "resilience_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/resilience_results/operational_resilience_report.json",
+      "exists": true,
+      "bytes": 4468,
+      "sha256": "26cb264a7da4a42c4f8966584c794935838742a10a8663d4078422de799fc994"
+    },
+    "gitignore": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/.gitignore",
+      "exists": true,
+      "bytes": 503,
+      "sha256": "d3bd15a757a8701f903314f296ca09d3cbae5bc7aa0335c42ca48020dd9ced88"
+    }
+  },
+  "outputs": {
+    "wallet_security_findings.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/wallet_security_findings.csv",
+      "rows": 7,
+      "bytes": 1458,
+      "sha256": "e16406bae131ce2da17c4d2cd3de5331ea5c74bcca55d830b6e6a8309b7a991e"
+    },
+    "kill_switch_findings.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/kill_switch_findings.csv",
+      "rows": 6,
+      "bytes": 935,
+      "sha256": "9cbe1a1ccd0c2ac8a63dae0d1fa7f0619a7b3f33b0c486968df74a1f5185a2c8"
+    },
+    "live_readiness_gate_checks.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/live_readiness_gate_checks.csv",
+      "rows": 9,
+      "bytes": 1062,
+      "sha256": "49c1cead4a23d0e324a8cb767c8cd230360690b85257e0b35027c28cb20ab96c"
+    },
+    "repository_secret_scan.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/repository_secret_scan.csv",
+      "rows": 13,
+      "bytes": 1748,
+      "sha256": "e25522f07c70ec6bd765e1a68b360b661e3188ba5bc3c6508deae9e3262454ba"
+    },
+    "live_readiness_audit_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/live_readiness_audit_report.json",
+      "rows": null,
+      "bytes": 9823,
+      "sha256": "090c0748a4f3190520c014b3cb166046ca879f29eda1b12d07d6a771835e3882"
+    },
+    "executive_summary.txt": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/executive_summary.txt",
+      "rows": null,
+      "bytes": 930,
+      "sha256": "2fc3558ae48f1f13303d9a70de7f6e2c89831e06d65b16a1cb63f56b56769053"
+    }
+  }
+}

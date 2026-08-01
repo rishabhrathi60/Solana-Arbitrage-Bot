@@ -1,0 +1,288 @@
+{
+  "schema_version": "14D.1.0",
+  "summary": {
+    "generated_at": "2026-08-01T05:36:58.612+00:00",
+    "schema_version": "14D.1.0",
+    "operating_mode": "SECURITY_AUDIT_ONLY",
+    "repository_root": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot",
+    "files_scanned": 3,
+    "secret_findings": 13,
+    "critical_secret_findings": 0,
+    "wallet_findings": 7,
+    "wallet_findings_passed": 7,
+    "kill_switch_findings": 6,
+    "kill_switch_findings_passed": 6,
+    "gate_checks": 9,
+    "gate_checks_passed": 6,
+    "blocking_failures": 3,
+    "blocking_reasons": [
+      "Phase 13F institutional live readiness remains blocked.",
+      "Phase 14A operational shadow gate remains blocked.",
+      "Phase 14B edge decomposition remains blocked."
+    ],
+    "security_audit_passed": false,
+    "final_decision": "BLOCK_LIVE_EXECUTION",
+    "upstream": {
+      "phase_13f_live_readiness_allowed": false,
+      "phase_14a_operational_gate_passed": false,
+      "phase_14b_diagnostics_passed": false,
+      "phase_14c_resilience_passed": true
+    },
+    "safety": {
+      "wallet_connected": false,
+      "private_key_loaded": false,
+      "transaction_signing_enabled": false,
+      "transaction_broadcasting_enabled": false,
+      "live_execution_enabled": false,
+      "automatic_promotion_enabled": false,
+      "manual_approval_required": true
+    },
+    "valid": true
+  },
+  "configuration": {
+    "promotion_decision": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json",
+    "shadow_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+    "diagnostics_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_execution_diagnostics_report.json",
+    "resilience_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/resilience_results/operational_resilience_report.json",
+    "gitignore_path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/.gitignore",
+    "env_example_path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/.env.example",
+    "repository_root": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot",
+    "output_directory": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit",
+    "overwrite": true,
+    "maximum_files_to_scan": 10000,
+    "maximum_file_size_bytes": 2000000,
+    "require_gitignore_secret_patterns": true,
+    "require_no_secret_findings": true,
+    "require_upstream_live_readiness": true,
+    "require_shadow_gate": true,
+    "require_diagnostics_gate": true,
+    "require_resilience_gate": true
+  },
+  "wallet_findings": [
+    {
+      "category": "WALLET_SECURITY",
+      "check_id": "GITIGNORE_ENV",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Ignore .env and environment-secret files.",
+      "evidence": "Pattern present in .gitignore",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/.gitignore"
+    },
+    {
+      "category": "WALLET_SECURITY",
+      "check_id": "GITIGNORE_KEYPAIR",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Ignore wallet keypair and private-key files.",
+      "evidence": "Pattern present in .gitignore",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/.gitignore"
+    },
+    {
+      "category": "WALLET_SECURITY",
+      "check_id": "GITIGNORE_SECRETS",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Ignore dedicated secret directories and files.",
+      "evidence": "Pattern present in .gitignore",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/.gitignore"
+    },
+    {
+      "category": "WALLET_SECURITY",
+      "check_id": "NO_PRIVATE_KEY_MATERIAL",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Repository must not contain private-key, mnemonic, or keypair material.",
+      "evidence": "0 blocking findings",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot"
+    },
+    {
+      "category": "WALLET_SECURITY",
+      "check_id": "NO_WALLET_CONNECTION",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Phase 14D does not connect a wallet.",
+      "evidence": "Static audit-only module.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit.py"
+    },
+    {
+      "category": "WALLET_SECURITY",
+      "check_id": "NO_SECRET_VALUE_OUTPUT",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Secret scan reports type and location only, never secret values.",
+      "evidence": "Redacted diagnostics design.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit.py"
+    },
+    {
+      "category": "WALLET_SECURITY",
+      "check_id": "MANUAL_APPROVAL_REQUIRED",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Any tiny live pilot requires a separate manual approval step.",
+      "evidence": "No automatic promotion code path.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit.py"
+    }
+  ],
+  "kill_switch_findings": [
+    {
+      "category": "KILL_SWITCH",
+      "check_id": "RESILIENCE_TESTS_PASS",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Failure-injection and emergency-stop tests must pass.",
+      "evidence": "BLOCK_LIVE_EXECUTION",
+      "source": "Phase 14C report"
+    },
+    {
+      "category": "KILL_SWITCH",
+      "check_id": "NO_FALSE_LIVE_EXECUTION",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "No injected failure may create a false live-execution event.",
+      "evidence": "0 events",
+      "source": "Phase 14C report"
+    },
+    {
+      "category": "KILL_SWITCH",
+      "check_id": "NO_STATE_CORRUPTION",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Emergency controls must not corrupt execution state.",
+      "evidence": "0 events",
+      "source": "Phase 14C report"
+    },
+    {
+      "category": "KILL_SWITCH",
+      "check_id": "LIVE_EXECUTION_DISABLED",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Live execution, signing, and broadcasting must remain disabled.",
+      "evidence": "All upstream execution flags are disabled",
+      "source": "Phase 14A report"
+    },
+    {
+      "category": "KILL_SWITCH",
+      "check_id": "EMERGENCY_STOP_SCENARIO",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Emergency-stop scenario must block execution.",
+      "evidence": "Validated in Phase 14C.",
+      "source": "Phase 14C report"
+    },
+    {
+      "category": "KILL_SWITCH",
+      "check_id": "CONSECUTIVE_LOSS_STOP",
+      "severity": "INFO",
+      "passed": true,
+      "blocking": true,
+      "message": "Consecutive-loss limit must trigger emergency stop.",
+      "evidence": "Validated in Phase 14C.",
+      "source": "Phase 14C report"
+    }
+  ],
+  "gate_checks": [
+    {
+      "name": "NO_COMMITTED_SECRET_FINDINGS",
+      "passed": true,
+      "observed": 0,
+      "comparison": "==",
+      "required": 0,
+      "blocking": true,
+      "message": "Repository secret scan found possible committed private-key or seed material."
+    },
+    {
+      "name": "GITIGNORE_SECRET_COVERAGE",
+      "passed": true,
+      "observed": 3,
+      "comparison": "==",
+      "required": 3,
+      "blocking": true,
+      "message": ".gitignore does not cover all required secret-bearing files and wallet artifacts."
+    },
+    {
+      "name": "WALLET_ISOLATION_CONTROLS",
+      "passed": true,
+      "observed": 7,
+      "comparison": "==",
+      "required": 7,
+      "blocking": true,
+      "message": "One or more wallet-isolation controls are missing."
+    },
+    {
+      "name": "KILL_SWITCH_CONTROLS",
+      "passed": true,
+      "observed": 6,
+      "comparison": "==",
+      "required": 6,
+      "blocking": true,
+      "message": "One or more emergency-stop or kill-switch controls failed audit."
+    },
+    {
+      "name": "PHASE_13F_LIVE_READINESS",
+      "passed": false,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "blocking": true,
+      "message": "Phase 13F institutional live readiness remains blocked."
+    },
+    {
+      "name": "PHASE_14A_OPERATIONAL_GATE",
+      "passed": false,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "blocking": true,
+      "message": "Phase 14A operational shadow gate remains blocked."
+    },
+    {
+      "name": "PHASE_14B_DIAGNOSTICS_GATE",
+      "passed": false,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "blocking": true,
+      "message": "Phase 14B edge decomposition remains blocked."
+    },
+    {
+      "name": "PHASE_14C_RESILIENCE_GATE",
+      "passed": true,
+      "observed": true,
+      "comparison": "==",
+      "required": true,
+      "blocking": true,
+      "message": "Phase 14C resilience validation has not passed."
+    },
+    {
+      "name": "NO_LIVE_EXECUTION_STATE",
+      "passed": true,
+      "observed": 0,
+      "comparison": "==",
+      "required": 0,
+      "blocking": true,
+      "message": "An upstream report indicates live execution, wallet connection, signing, or broadcasting is enabled."
+    }
+  ],
+  "governance": {
+    "audit_only": true,
+    "wallet_connection_authorized": false,
+    "private_key_access_authorized": false,
+    "transaction_signing_enabled": false,
+    "transaction_broadcasting_enabled": false,
+    "live_execution_enabled": false,
+    "automatic_promotion_enabled": false,
+    "manual_approval_required": true
+  }
+}

@@ -1,0 +1,7 @@
+category,check_id,severity,passed,blocking,message,evidence,source
+KILL_SWITCH,RESILIENCE_TESTS_PASS,INFO,True,True,Failure-injection and emergency-stop tests must pass.,BLOCK_LIVE_EXECUTION,Phase 14C report
+KILL_SWITCH,NO_FALSE_LIVE_EXECUTION,INFO,True,True,No injected failure may create a false live-execution event.,0 events,Phase 14C report
+KILL_SWITCH,NO_STATE_CORRUPTION,INFO,True,True,Emergency controls must not corrupt execution state.,0 events,Phase 14C report
+KILL_SWITCH,LIVE_EXECUTION_DISABLED,INFO,True,True,"Live execution, signing, and broadcasting must remain disabled.",All upstream execution flags are disabled,Phase 14A report
+KILL_SWITCH,EMERGENCY_STOP_SCENARIO,INFO,True,True,Emergency-stop scenario must block execution.,Validated in Phase 14C.,Phase 14C report
+KILL_SWITCH,CONSECUTIVE_LOSS_STOP,INFO,True,True,Consecutive-loss limit must trigger emergency stop.,Validated in Phase 14C.,Phase 14C report

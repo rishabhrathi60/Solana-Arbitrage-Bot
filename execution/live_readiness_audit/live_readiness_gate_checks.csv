@@ -1,0 +1,10 @@
+name,passed,observed,comparison,required,blocking,message
+NO_COMMITTED_SECRET_FINDINGS,True,0,==,0,True,Repository secret scan found possible committed private-key or seed material.
+GITIGNORE_SECRET_COVERAGE,True,3,==,3,True,.gitignore does not cover all required secret-bearing files and wallet artifacts.
+WALLET_ISOLATION_CONTROLS,True,7,==,7,True,One or more wallet-isolation controls are missing.
+KILL_SWITCH_CONTROLS,True,6,==,6,True,One or more emergency-stop or kill-switch controls failed audit.
+PHASE_13F_LIVE_READINESS,False,False,==,True,True,Phase 13F institutional live readiness remains blocked.
+PHASE_14A_OPERATIONAL_GATE,False,False,==,True,True,Phase 14A operational shadow gate remains blocked.
+PHASE_14B_DIAGNOSTICS_GATE,False,False,==,True,True,Phase 14B edge decomposition remains blocked.
+PHASE_14C_RESILIENCE_GATE,True,True,==,True,True,Phase 14C resilience validation has not passed.
+NO_LIVE_EXECUTION_STATE,True,0,==,0,True,"An upstream report indicates live execution, wallet connection, signing, or broadcasting is enabled."

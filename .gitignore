@@ -18,3 +18,15 @@ research/feature_store/features.jsonl
 research/ml_research/holdout_predictions.csv
 research/ml_research/feature_importance.csv
 research/ml_research/*.pkl
+
+# Wallet and secret material
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+*keypair*.json
+wallet*.json
+secrets/
+secret/

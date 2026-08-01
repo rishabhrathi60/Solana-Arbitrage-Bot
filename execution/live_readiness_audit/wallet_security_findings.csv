@@ -1,0 +1,8 @@
+category,check_id,severity,passed,blocking,message,evidence,source
+WALLET_SECURITY,GITIGNORE_ENV,INFO,True,True,Ignore .env and environment-secret files.,Pattern present in .gitignore,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/.gitignore
+WALLET_SECURITY,GITIGNORE_KEYPAIR,INFO,True,True,Ignore wallet keypair and private-key files.,Pattern present in .gitignore,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/.gitignore
+WALLET_SECURITY,GITIGNORE_SECRETS,INFO,True,True,Ignore dedicated secret directories and files.,Pattern present in .gitignore,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/.gitignore
+WALLET_SECURITY,NO_PRIVATE_KEY_MATERIAL,INFO,True,True,"Repository must not contain private-key, mnemonic, or keypair material.",0 blocking findings,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot
+WALLET_SECURITY,NO_WALLET_CONNECTION,INFO,True,True,Phase 14D does not connect a wallet.,Static audit-only module.,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit.py
+WALLET_SECURITY,NO_SECRET_VALUE_OUTPUT,INFO,True,True,"Secret scan reports type and location only, never secret values.",Redacted diagnostics design.,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit.py
+WALLET_SECURITY,MANUAL_APPROVAL_REQUIRED,INFO,True,True,Any tiny live pilot requires a separate manual approval step.,No automatic promotion code path.,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit.py
