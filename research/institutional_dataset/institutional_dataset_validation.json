@@ -1,0 +1,120 @@
+{
+  "schema_version": "13B.1.0",
+  "summary": {
+    "generated_at": "2026-08-01T02:54:33.488586+00:00",
+    "schema_version": "13B.1.0",
+    "total_rows": 1400,
+    "total_cycles": 14,
+    "unique_assets": 549,
+    "unique_tokens": 314,
+    "historical_rows": 1300,
+    "historical_cycles": 13,
+    "verified_live_rows": 100,
+    "verified_live_cycles": 1,
+    "verified_rows": 0,
+    "verified_with_warning_rows": 100,
+    "unvalidated_historical_rows": 1300,
+    "successful_quotes": 1397,
+    "quote_errors": 3,
+    "eligible_observations": 1,
+    "profitable_observations": 5,
+    "average_net_profit_usd": -0.0056602634216177524,
+    "best_net_profit_usd": 0.025919000000000025,
+    "worst_net_profit_usd": -0.20155100000000004,
+    "average_total_cost_bps": 20.0,
+    "average_quote_latency_ms": 12.368469918317562,
+    "duplicate_rows_removed": 0,
+    "demo_rows_excluded": 0,
+    "invalid_rows_excluded": 0,
+    "first_event_time": "2026-07-30T14:09:40.000+00:00",
+    "last_event_time": "2026-08-01T02:17:15.943+00:00",
+    "valid": true
+  },
+  "checks": [
+    {
+      "name": "minimum_total_rows",
+      "passed": true,
+      "observed": 1400,
+      "expected": ">= 1",
+      "details": "Canonical row minimum."
+    },
+    {
+      "name": "minimum_total_cycles",
+      "passed": true,
+      "observed": 14,
+      "expected": ">= 1",
+      "details": "Canonical cycle minimum."
+    },
+    {
+      "name": "minimum_verified_live_rows",
+      "passed": true,
+      "observed": 100,
+      "expected": ">= 0",
+      "details": "Verified-live row minimum."
+    },
+    {
+      "name": "minimum_verified_live_cycles",
+      "passed": true,
+      "observed": 1,
+      "expected": ">= 0",
+      "details": "Verified-live cycle minimum."
+    },
+    {
+      "name": "unique_institutional_event_ids",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "institutional_event_id must be unique."
+    },
+    {
+      "name": "asset_key_completeness",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "Every canonical row must have asset_key."
+    },
+    {
+      "name": "verified_live_gate",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "Verified-live rows must pass research eligibility and status gates."
+    },
+    {
+      "name": "demo_trade_exclusion",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "Demo/synthetic rows are prohibited."
+    },
+    {
+      "name": "chronological_order",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "Canonical rows must be chronological."
+    },
+    {
+      "name": "profit_arithmetic",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "Gross and net profit must reconcile."
+    },
+    {
+      "name": "net_bps_arithmetic",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "net_edge_bps must reconcile."
+    },
+    {
+      "name": "cycle_reconciliation",
+      "passed": true,
+      "observed": 14,
+      "expected": 14,
+      "details": "Event and cycle identities must match."
+    }
+  ],
+  "valid": true
+}

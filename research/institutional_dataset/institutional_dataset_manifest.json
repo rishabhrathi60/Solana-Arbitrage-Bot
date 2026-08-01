@@ -1,0 +1,89 @@
+{
+  "schema_version": "13B.1.0",
+  "generated_at": "2026-08-01T02:54:34.154847+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T02:54:33.488586+00:00",
+    "schema_version": "13B.1.0",
+    "total_rows": 1400,
+    "total_cycles": 14,
+    "unique_assets": 549,
+    "unique_tokens": 314,
+    "historical_rows": 1300,
+    "historical_cycles": 13,
+    "verified_live_rows": 100,
+    "verified_live_cycles": 1,
+    "verified_rows": 0,
+    "verified_with_warning_rows": 100,
+    "unvalidated_historical_rows": 1300,
+    "successful_quotes": 1397,
+    "quote_errors": 3,
+    "eligible_observations": 1,
+    "profitable_observations": 5,
+    "average_net_profit_usd": -0.0056602634216177524,
+    "best_net_profit_usd": 0.025919000000000025,
+    "worst_net_profit_usd": -0.20155100000000004,
+    "average_total_cost_bps": 20.0,
+    "average_quote_latency_ms": 12.368469918317562,
+    "duplicate_rows_removed": 0,
+    "demo_rows_excluded": 0,
+    "invalid_rows_excluded": 0,
+    "first_event_time": "2026-07-30T14:09:40.000+00:00",
+    "last_event_time": "2026-08-01T02:17:15.943+00:00",
+    "valid": true
+  },
+  "sources": {
+    "historical": {
+      "enabled": true,
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/backtesting/exports/historical_backtest_events.jsonl"
+    },
+    "verified_live": {
+      "enabled": true,
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/verified_dataset/verified_live_features.jsonl",
+      "required_statuses": [
+        "VERIFIED",
+        "VERIFIED_WITH_WARNING"
+      ],
+      "required_research_eligible": true
+    }
+  },
+  "governance": {
+    "demo_trades_included": false,
+    "invalid_live_rows_included": false,
+    "legacy_live_rows_included": false,
+    "historical_rows_preserved_as": "HISTORICAL_UNVALIDATED",
+    "source_payload_preserved": true,
+    "canonical_rows_sorted_chronologically": true
+  },
+  "files": {
+    "institutional_events.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_events.csv",
+      "rows": 1400,
+      "bytes": 3401918,
+      "sha256": "d119b2ed0bd45227ac38d678060a89052af00cc61b552b02d5098ae2de1996e9"
+    },
+    "institutional_events.jsonl": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_events.jsonl",
+      "rows": 1400,
+      "bytes": 5364018,
+      "sha256": "e18231e94f4ab63cf8a511116fc3279e2861805aef463394d3c2a69ec5576006"
+    },
+    "institutional_cycles.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_cycles.csv",
+      "rows": 14,
+      "bytes": 3704,
+      "sha256": "a586f993d6676ce14c4813fd335fd36771341d83c0393f839eb1e69478a70268"
+    },
+    "institutional_dataset_validation.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_dataset_validation.json",
+      "rows": 12,
+      "bytes": 3170,
+      "sha256": "891fa50227918f0fa8698e686cb2adcdd6883a88221bdea90b3e8171ea932f57"
+    },
+    "source_field_catalog.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/source_field_catalog.json",
+      "rows": null,
+      "bytes": 6905,
+      "sha256": "13f1ac8e8a2d5c3983f1403d1ff09aa44b47765347bb79c32ec2d1ab73cd97f0"
+    }
+  }
+}
