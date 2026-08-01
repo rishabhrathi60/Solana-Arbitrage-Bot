@@ -1,0 +1,62 @@
+{
+  "schema_version": "13D.1.0",
+  "generated_at": "2026-08-01T04:01:05.274709+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T04:01:05.242374+00:00",
+    "schema_version": "13D.1.0",
+    "rows": 1400,
+    "cycles": 14,
+    "historical_rows": 1300,
+    "verified_live_rows": 100,
+    "folds_attempted": 5,
+    "folds_completed": 5,
+    "folds_skipped": 0,
+    "profitable_folds": 3,
+    "out_of_sample_trades": 5,
+    "out_of_sample_wins": 5,
+    "out_of_sample_losses": 0,
+    "out_of_sample_profit_usd": 0.03574000000000011,
+    "out_of_sample_return_percent": 0.0035740000000000116,
+    "out_of_sample_profit_factor": 1000000000000.0,
+    "out_of_sample_maximum_drawdown_percent": 0.0,
+    "initial_capital_usd": 1000.0,
+    "ending_capital_usd": 1000.03574,
+    "promotion_allowed": false,
+    "promotion_decision": "BLOCK_RESEARCH_PROMOTION",
+    "statistically_weak": true,
+    "weakness_reasons": [
+      "Fewer than 30 institutional cycles.",
+      "Fewer than 30 profitable observations.",
+      "Fewer than 30 out-of-sample selected trades.",
+      "One or more promotion checks failed."
+    ],
+    "valid": true
+  },
+  "files": {
+    "walk_forward_folds.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/walk_forward_folds.csv",
+      "bytes": 1424,
+      "sha256": "0875abddd7853a3474b170df1ddcf0b4130f267e31c14f423075a820e90090d6"
+    },
+    "walk_forward_predictions.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/walk_forward_predictions.csv",
+      "bytes": 192343,
+      "sha256": "331fe3fecd22b970ec9a6983368d1b0dad5efb1702fd0b47caf6736987812c7b"
+    },
+    "walk_forward_trades.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/walk_forward_trades.csv",
+      "bytes": 1531,
+      "sha256": "6150b3dc1dd4702712a805eebc6f288e21fbe9ed1137a7d1d52ed16d097c38ac"
+    },
+    "walk_forward_equity_curve.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/walk_forward_equity_curve.csv",
+      "bytes": 708,
+      "sha256": "ec5746a9899a8f2c6e143b3e18bd85344e85b395d95f97e677fbd61d7dda9a4d"
+    },
+    "institutional_walk_forward_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json",
+      "bytes": 7083,
+      "sha256": "26d6d9a7dcc28d49eb0f298e8ceb382575bbbd732c385e4015bc810f2eb42839"
+    }
+  }
+}
