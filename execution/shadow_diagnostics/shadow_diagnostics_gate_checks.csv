@@ -1,0 +1,7 @@
+name,passed,observed,comparison,required,message
+CONFIRMED_ATTEMPTS,True,463.0,>=,100.0,Enough confirmed attempts are required for diagnostics.
+MEDIAN_FEE_SHARE,False,1.1710611907943405,<=,1.0,Median fee share consumes too much quoted edge.
+MEDIAN_EXECUTION_PENALTY_SHARE,True,0.5679729904095714,<=,1.0,Median execution penalty consumes too much quoted edge.
+PROFITABLE_CONFIRMATION_RATE,False,0.4146868250539957,>=,0.5,Too few confirmed executions remain profitable.
+SINGLE_TRADE_PROFIT_CONCENTRATION,False,0.9069111115008958,<=,0.6,Shadow profits are too concentrated in one source trade.
+FAILURE_OPPORTUNITY_COST_SHARE,True,0.05257834359261343,<=,0.5,Failed and missed executions consume too much positive edge.

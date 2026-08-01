@@ -1,0 +1,89 @@
+{
+  "schema_version": "14B.1.0",
+  "generated_at": "2026-08-01T05:06:58.246+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T05:06:58.215+00:00",
+    "schema_version": "14B.1.0",
+    "operating_mode": "SHADOW_DIAGNOSTICS_ONLY",
+    "attempts": 500,
+    "confirmed_attempts": 463,
+    "source_trades": 5,
+    "unique_tokens": 5,
+    "quoted_profit_total_usd": 3.3860850000000102,
+    "realized_profit_total_usd": 1.3535967159291997,
+    "profit_degradation_total_usd": 2.0324882840708103,
+    "network_fee_total_usd": 1.4593271994180148,
+    "execution_penalty_total_usd": 0.5731610846527957,
+    "failure_opportunity_cost_usd": 0.187915000000001,
+    "failure_opportunity_cost_share": 0.05257834359261343,
+    "median_realized_profit_usd": -0.001570075545902452,
+    "mean_realized_profit_usd": 0.002923535023605183,
+    "profitable_confirmation_rate": 0.4146868250539957,
+    "median_fee_share_of_quoted_edge": 1.1710611907943405,
+    "median_execution_penalty_share_of_quoted_edge": 0.5679729904095714,
+    "single_trade_profit_concentration": 0.9069111115008958,
+    "largest_cost_driver": "network_fees",
+    "largest_cost_driver_usd": 1.4593271994180148,
+    "negative_median_profit_confirmed": true,
+    "diagnostics_passed": false,
+    "final_decision": "EDGE_DECOMPOSITION_FAILED",
+    "upstream_shadow_decision": "BLOCK_LIVE_EXECUTION",
+    "live_execution_enabled": false,
+    "wallet_connection_authorized": false,
+    "transaction_signing_enabled": false,
+    "transaction_broadcasting_enabled": false,
+    "valid": true
+  },
+  "inputs": {
+    "attempts_csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_attempts.csv",
+      "sha256": "6dd9d89a57710246e68f662cf5e01e8986018cdd0bec2ea04c696c7d79cfd860"
+    },
+    "trades_csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_trades.csv",
+      "sha256": "8e6b82d31f15df6b04cc643b8ae7dcf6da70af850fda74f9099c67e7ce74854b"
+    },
+    "shadow_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+      "sha256": "94d4761a2f20016328a06cd79ea89688f6a21d4280aea5ff59e6f64ef77a58af"
+    }
+  },
+  "outputs": {
+    "edge_decomposition.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/edge_decomposition.csv",
+      "rows": 500,
+      "bytes": 414206,
+      "sha256": "811288b9c32456aa3a3574611b14e4ce4f477b018b517e3f2bc407dd09c2b4f0"
+    },
+    "trade_diagnostics.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/trade_diagnostics.csv",
+      "rows": 5,
+      "bytes": 1461,
+      "sha256": "2a6049891fc3100f39aab3a1f89112cd904fa4d1d92f24b848af924fed49aa79"
+    },
+    "token_diagnostics.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/token_diagnostics.csv",
+      "rows": 5,
+      "bytes": 1439,
+      "sha256": "fdc0a2c89303de2e96ae752890c55c6f7ce6e9c7b7c4841b824b1d0eb909c7fe"
+    },
+    "failure_diagnostics.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/failure_diagnostics.csv",
+      "rows": 4,
+      "bytes": 439,
+      "sha256": "961531d947f2e9099426a86241a09ed14d635b4e3233d1f5d85dc226579400c9"
+    },
+    "shadow_diagnostics_gate_checks.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_diagnostics_gate_checks.csv",
+      "rows": 6,
+      "bytes": 722,
+      "sha256": "3905a2c4bfc2de184081d8aa3c25c9d9a4ca0e8e27433975ad328952a34fb25b"
+    },
+    "shadow_execution_diagnostics_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_execution_diagnostics_report.json",
+      "rows": null,
+      "bytes": 4007,
+      "sha256": "14d025aefe6ffedc3422fe92430b3ede67c0e598b902236c3a421ccac5843818"
+    }
+  }
+}

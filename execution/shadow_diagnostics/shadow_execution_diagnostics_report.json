@@ -1,0 +1,107 @@
+{
+  "schema_version": "14B.1.0",
+  "summary": {
+    "generated_at": "2026-08-01T05:06:58.215+00:00",
+    "schema_version": "14B.1.0",
+    "operating_mode": "SHADOW_DIAGNOSTICS_ONLY",
+    "attempts": 500,
+    "confirmed_attempts": 463,
+    "source_trades": 5,
+    "unique_tokens": 5,
+    "quoted_profit_total_usd": 3.3860850000000102,
+    "realized_profit_total_usd": 1.3535967159291997,
+    "profit_degradation_total_usd": 2.0324882840708103,
+    "network_fee_total_usd": 1.4593271994180148,
+    "execution_penalty_total_usd": 0.5731610846527957,
+    "failure_opportunity_cost_usd": 0.187915000000001,
+    "failure_opportunity_cost_share": 0.05257834359261343,
+    "median_realized_profit_usd": -0.001570075545902452,
+    "mean_realized_profit_usd": 0.002923535023605183,
+    "profitable_confirmation_rate": 0.4146868250539957,
+    "median_fee_share_of_quoted_edge": 1.1710611907943405,
+    "median_execution_penalty_share_of_quoted_edge": 0.5679729904095714,
+    "single_trade_profit_concentration": 0.9069111115008958,
+    "largest_cost_driver": "network_fees",
+    "largest_cost_driver_usd": 1.4593271994180148,
+    "negative_median_profit_confirmed": true,
+    "diagnostics_passed": false,
+    "final_decision": "EDGE_DECOMPOSITION_FAILED",
+    "upstream_shadow_decision": "BLOCK_LIVE_EXECUTION",
+    "live_execution_enabled": false,
+    "wallet_connection_authorized": false,
+    "transaction_signing_enabled": false,
+    "transaction_broadcasting_enabled": false,
+    "valid": true
+  },
+  "configuration": {
+    "attempts_csv": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_attempts.csv",
+    "trades_csv": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_trades.csv",
+    "shadow_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+    "output_directory": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics",
+    "overwrite": true,
+    "minimum_confirmed_attempts": 100,
+    "maximum_median_fee_share_of_edge": 1.0,
+    "maximum_median_execution_penalty_share": 1.0,
+    "minimum_profitable_confirmation_rate": 0.5,
+    "maximum_single_trade_profit_concentration": 0.6,
+    "maximum_failure_opportunity_cost_share": 0.5
+  },
+  "gate_checks": [
+    {
+      "name": "CONFIRMED_ATTEMPTS",
+      "passed": true,
+      "observed": 463.0,
+      "comparison": ">=",
+      "required": 100.0,
+      "message": "Enough confirmed attempts are required for diagnostics."
+    },
+    {
+      "name": "MEDIAN_FEE_SHARE",
+      "passed": false,
+      "observed": 1.1710611907943405,
+      "comparison": "<=",
+      "required": 1.0,
+      "message": "Median fee share consumes too much quoted edge."
+    },
+    {
+      "name": "MEDIAN_EXECUTION_PENALTY_SHARE",
+      "passed": true,
+      "observed": 0.5679729904095714,
+      "comparison": "<=",
+      "required": 1.0,
+      "message": "Median execution penalty consumes too much quoted edge."
+    },
+    {
+      "name": "PROFITABLE_CONFIRMATION_RATE",
+      "passed": false,
+      "observed": 0.4146868250539957,
+      "comparison": ">=",
+      "required": 0.5,
+      "message": "Too few confirmed executions remain profitable."
+    },
+    {
+      "name": "SINGLE_TRADE_PROFIT_CONCENTRATION",
+      "passed": false,
+      "observed": 0.9069111115008958,
+      "comparison": "<=",
+      "required": 0.6,
+      "message": "Shadow profits are too concentrated in one source trade."
+    },
+    {
+      "name": "FAILURE_OPPORTUNITY_COST_SHARE",
+      "passed": true,
+      "observed": 0.05257834359261343,
+      "comparison": "<=",
+      "required": 0.5,
+      "message": "Failed and missed executions consume too much positive edge."
+    }
+  ],
+  "governance": {
+    "research_only": true,
+    "live_execution_enabled": false,
+    "wallet_connection_authorized": false,
+    "transaction_signing_enabled": false,
+    "transaction_broadcasting_enabled": false,
+    "automatic_promotion_enabled": false
+  }
+}
