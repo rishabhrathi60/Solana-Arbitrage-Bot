@@ -1,0 +1,2 @@
+cycle_id,cycle_number,rows,quote_successes,quote_errors,eligible_observations,profitable_observations,duplicate_rows,missing_asset_keys,missing_required_fields,arithmetic_errors,timestamp_errors,numeric_errors,warning_count,error_count,average_enrichment_quality_score,average_quote_latency_ms,average_quote_age_ms,average_total_cost_bps,average_net_profit_usd,quality_score,valid
+2026-07-31 20:47:29,20,100,100,0,0,0,0,0,0,0,0,0,0,0,100.0,119.70066559049883,0.0,20.0,-0.006526030000000004,100.0,True

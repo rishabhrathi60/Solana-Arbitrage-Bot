@@ -1,0 +1,234 @@
+{
+  "summary": {
+    "generated_at": "2026-08-01T01:13:51.418235+00:00",
+    "schema_version": "12D.1.1",
+    "strict_mode": false,
+    "database_path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/database/trades.db",
+    "all_rows": 100,
+    "all_cycles": 1,
+    "legacy_rows": 0,
+    "legacy_cycles": 0,
+    "current_rows": 100,
+    "current_cycles": 1,
+    "rows_examined": 100,
+    "cycles_examined": 1,
+    "checks_run": 15,
+    "checks_passed": 15,
+    "checks_failed": 0,
+    "errors": 0,
+    "warnings": 0,
+    "information_notices": 0,
+    "duplicate_rows": 0,
+    "overall_quality_score": 100.0,
+    "clean_data_gate_passed": true,
+    "valid": true,
+    "selected_cycle_id": null
+  },
+  "configuration": {
+    "database_path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/database/trades.db",
+    "output_directory": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/data_quality",
+    "strict": false,
+    "latest_cycle_only": true,
+    "cycle_id": null,
+    "write_validation_history": true,
+    "overwrite": true,
+    "arithmetic_tolerance_usd": 1e-08,
+    "bps_tolerance": 1e-06,
+    "latency_warning_ms": 1000.0,
+    "latency_error_ms": 20000.0,
+    "quote_age_warning_ms": 5000.0,
+    "minimum_quality_score": 90.0,
+    "minimum_asset_key_rate": 0.99,
+    "minimum_required_field_rate": 0.95,
+    "duplicate_rate_error_threshold": 0.01,
+    "classify_legacy_data": true,
+    "legacy_blank_asset_key_rate": 0.5,
+    "minimum_current_rows": 100,
+    "minimum_current_cycles": 1
+  },
+  "checks": [
+    {
+      "name": "required_field_completeness",
+      "passed": true,
+      "examined": 2100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "completeness_rate=100.0000%, missing_values=0"
+    },
+    {
+      "name": "numeric_finiteness",
+      "passed": true,
+      "examined": 4400,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "rows=100, numeric_fields=44"
+    },
+    {
+      "name": "numeric_ranges",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "validated non-negative and score-range constraints"
+    },
+    {
+      "name": "asset_identity",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "asset_key_rate=100.0000%, missing_asset_keys=0"
+    },
+    {
+      "name": "duplicate_observations",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "duplicate_rows=0, duplicate_rate=0.0000%"
+    },
+    {
+      "name": "timestamp_ordering",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "validated scan/log ordering and non-negative timing values"
+    },
+    {
+      "name": "quote_success_consistency",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "validated quote_successful against decision and amounts"
+    },
+    {
+      "name": "profit_arithmetic",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "tolerance_usd=1e-08"
+    },
+    {
+      "name": "bps_arithmetic",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "bps_tolerance=1e-06"
+    },
+    {
+      "name": "score_derivatives",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "validated score min/max/range relationships"
+    },
+    {
+      "name": "enrichment_quality",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "minimum_quality_score=90.0"
+    },
+    {
+      "name": "latency_outliers",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "warning_ms=1000.0, error_ms=20000.0"
+    },
+    {
+      "name": "cycle_positions",
+      "passed": true,
+      "examined": 1,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "cycles_examined=1"
+    },
+    {
+      "name": "cycle_summary_reconciliation",
+      "passed": true,
+      "examined": 1,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "feature_cycles=1, summary_cycles=1"
+    },
+    {
+      "name": "cross_table_reconciliation",
+      "passed": true,
+      "examined": 100,
+      "errors": 0,
+      "warnings": 0,
+      "information": 0,
+      "details": "linked=100, found=100"
+    }
+  ],
+  "issues": [],
+  "legacy_classification": {
+    "classification_enabled": true,
+    "all_rows": 100,
+    "all_cycles": 1,
+    "legacy_rows": 0,
+    "legacy_cycles": 0,
+    "current_rows": 100,
+    "current_cycles": 1,
+    "legacy_cycle_ids": [],
+    "current_cycle_ids": [
+      "2026-07-31 20:47:29"
+    ],
+    "classification_rule": "A complete cycle is legacy when its blank asset_key rate is >= 50.00%. Legacy rows remain stored and auditable but are excluded from current-schema validation and clean-data promotion gates."
+  },
+  "clean_data_gate": {
+    "passed": true,
+    "minimum_current_rows": 100,
+    "minimum_current_cycles": 1,
+    "current_rows": 100,
+    "current_cycles": 1
+  },
+  "cycle_summaries": [
+    {
+      "cycle_id": "2026-07-31 20:47:29",
+      "cycle_number": 20,
+      "rows": 100,
+      "quote_successes": 100,
+      "quote_errors": 0,
+      "eligible_observations": 0,
+      "profitable_observations": 0,
+      "duplicate_rows": 0,
+      "missing_asset_keys": 0,
+      "missing_required_fields": 0,
+      "arithmetic_errors": 0,
+      "timestamp_errors": 0,
+      "numeric_errors": 0,
+      "warning_count": 0,
+      "error_count": 0,
+      "average_enrichment_quality_score": 100.0,
+      "average_quote_latency_ms": 119.70066559049883,
+      "average_quote_age_ms": 0.0,
+      "average_total_cost_bps": 20.0,
+      "average_net_profit_usd": -0.006526030000000004,
+      "quality_score": 100.0,
+      "valid": true
+    }
+  ]
+}

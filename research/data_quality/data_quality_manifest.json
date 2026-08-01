@@ -1,0 +1,27 @@
+{
+  "validator_schema_version": "12D.1.1",
+  "generated_at": "2026-08-01T01:13:51.474004+00:00",
+  "database_path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/database/trades.db",
+  "outputs": {
+    "report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/data_quality/enriched_data_quality_report.json",
+    "issues": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/data_quality/enriched_data_quality_issues.csv",
+    "cycle_summaries": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/data_quality/cycle_quality_summary.csv"
+  },
+  "valid": true,
+  "clean_data_gate_passed": true,
+  "legacy_classification": {
+    "classification_enabled": true,
+    "all_rows": 100,
+    "all_cycles": 1,
+    "legacy_rows": 0,
+    "legacy_cycles": 0,
+    "current_rows": 100,
+    "current_cycles": 1,
+    "legacy_cycle_ids": [],
+    "current_cycle_ids": [
+      "2026-07-31 20:47:29"
+    ],
+    "classification_rule": "A complete cycle is legacy when its blank asset_key rate is >= 50.00%. Legacy rows remain stored and auditable but are excluded from current-schema validation and clean-data promotion gates."
+  },
+  "overall_quality_score": 100.0
+}
