@@ -1,0 +1,72 @@
+{
+  "schema_version": "13A.1.0",
+  "generated_at": "2026-08-01T02:46:10.231418+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T02:46:10.162381+00:00",
+    "schema_version": "13A.1.0",
+    "database_path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/database/trades.db",
+    "verified_rows": 100,
+    "verified_cycles": 1,
+    "unique_assets": 100,
+    "unique_tokens": 100,
+    "verified_status_rows": 0,
+    "verified_with_warning_status_rows": 100,
+    "successful_quotes": 100,
+    "quote_errors": 0,
+    "eligible_observations": 0,
+    "profitable_observations": 2,
+    "average_net_profit_usd": -0.0035989899999999938,
+    "best_net_profit_usd": 0.006679000000000103,
+    "worst_net_profit_usd": -0.011754999999999958,
+    "average_total_cost_bps": 20.0,
+    "average_quote_latency_ms": 172.78752475889632,
+    "average_quality_score": 99.0,
+    "excluded_unvalidated_cycles": 3,
+    "excluded_noneligible_cycles": 0,
+    "excluded_legacy_cycles": 0,
+    "excluded_invalid_cycles": 0,
+    "excluded_warning_cycles": 0,
+    "excluded_validation_error_cycles": 0,
+    "first_scan_time": "2026-08-01T02:13:57.945+00:00",
+    "last_scan_time": "2026-08-01T02:17:15.943+00:00",
+    "valid": true
+  },
+  "source_policy": {
+    "source_table": "live_scanner_features",
+    "validation_table": "scanner_cycle_validation",
+    "required_research_eligible": 1,
+    "allowed_statuses": [
+      "VERIFIED",
+      "VERIFIED_WITH_WARNING"
+    ],
+    "demo_tables_included": false,
+    "legacy_cycles_included": false,
+    "unvalidated_cycles_included": false
+  },
+  "files": {
+    "verified_live_features.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/verified_dataset/verified_live_features.csv",
+      "rows": 100,
+      "bytes": 466368,
+      "sha256": "b2907b969c146a8260d36c237845701ca5a87c2f01948d9230e72300ae78aaab"
+    },
+    "verified_live_features.jsonl": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/verified_dataset/verified_live_features.jsonl",
+      "rows": 100,
+      "bytes": 605263,
+      "sha256": "1628652b97640f4d96bdd290659160e6a3b461d0fc8c14d40b42d0f515b8e06c"
+    },
+    "verified_cycles.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/verified_dataset/verified_cycles.csv",
+      "rows": 1,
+      "bytes": 901,
+      "sha256": "fb6285590c649d911645319f2e03abdbf7c1210575906b19cce3fbde090c9226"
+    },
+    "verified_dataset_validation.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/verified_dataset/verified_dataset_validation.json",
+      "rows": 9,
+      "bytes": 3013,
+      "sha256": "2dd282e01bea941de46ef61953cce67dd497d98eca7b9959f489365e6fa00125"
+    }
+  }
+}
