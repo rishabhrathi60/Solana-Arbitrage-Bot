@@ -1,0 +1,88 @@
+{
+  "schema_version": "14C.1.0",
+  "generated_at": "2026-08-01T05:17:05.296+00:00",
+  "run_id": "fa979bdf-1b28-4f5d-949a-d2e420feb881",
+  "summary": {
+    "generated_at": "2026-08-01T05:17:05.282+00:00",
+    "run_id": "fa979bdf-1b28-4f5d-949a-d2e420feb881",
+    "schema_version": "14C.1.0",
+    "operating_mode": "FAILURE_INJECTION_ONLY",
+    "scenarios": 14,
+    "contained_scenarios": 14,
+    "recoverable_scenarios": 12,
+    "recovered_scenarios": 12,
+    "idempotency_scenarios": 5,
+    "idempotent_scenarios": 5,
+    "unhandled_failures": 0,
+    "state_corruption_events": 0,
+    "false_live_execution_events": 0,
+    "containment_rate": 1.0,
+    "recovery_rate": 1.0,
+    "idempotency_rate": 1.0,
+    "unhandled_failure_rate": 0.0,
+    "maximum_recovery_time_ms": 305.92638699454255,
+    "resilience_passed": true,
+    "final_decision": "BLOCK_LIVE_EXECUTION",
+    "blocking_reasons": [
+      "Phase 14A operational shadow gate remains blocked.",
+      "Phase 14B edge decomposition remains blocked.",
+      "Phase 13F live readiness remains blocked."
+    ],
+    "upstream": {
+      "phase_14a_operational_gate_passed": false,
+      "phase_14b_diagnostics_passed": false,
+      "phase_13f_live_readiness_allowed": false
+    },
+    "safety": {
+      "wallet_connected": false,
+      "transaction_signing_enabled": false,
+      "transaction_broadcasting_enabled": false,
+      "live_execution_enabled": false
+    },
+    "valid": true
+  },
+  "inputs": {
+    "shadow_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+      "sha256": "94d4761a2f20016328a06cd79ea89688f6a21d4280aea5ff59e6f64ef77a58af"
+    },
+    "shadow_attempts": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_attempts.csv",
+      "sha256": "6dd9d89a57710246e68f662cf5e01e8986018cdd0bec2ea04c696c7d79cfd860"
+    },
+    "diagnostics_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_execution_diagnostics_report.json",
+      "sha256": "14d025aefe6ffedc3422fe92430b3ede67c0e598b902236c3a421ccac5843818"
+    },
+    "promotion_decision": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json",
+      "sha256": "2f1d58be1377f1aec6a6cdd091035e42a31369894373c175b2cc68c851d6ac78"
+    }
+  },
+  "outputs": {
+    "failure_injection_scenarios.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/resilience_results/failure_injection_scenarios.csv",
+      "rows": 14,
+      "bytes": 11141,
+      "sha256": "3960654cc890c744b9e7758817fe4e33d2c8496a0949faab67ae8494a94ab297"
+    },
+    "failure_injection_events.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/resilience_results/failure_injection_events.csv",
+      "rows": 15,
+      "bytes": 2182,
+      "sha256": "02bfbd12ed6c24b418d9913187fb029dcf88ed1f94ab5f7ce574e6d0a52eee1b"
+    },
+    "resilience_gate_checks.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/resilience_results/resilience_gate_checks.csv",
+      "rows": 8,
+      "bytes": 742,
+      "sha256": "dbcc611481e9e1a70c18725fb146edf7dde443ef2cbbab625cac87c9af72142d"
+    },
+    "operational_resilience_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/resilience_results/operational_resilience_report.json",
+      "rows": null,
+      "bytes": 4468,
+      "sha256": "26cb264a7da4a42c4f8966584c794935838742a10a8663d4078422de799fc994"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+name,passed,observed,comparison,required,message
+SCENARIO_COUNT,True,14.0,>=,12.0,Enough resilience scenarios must complete.
+CONTAINMENT_RATE,True,1.0,>=,1.0,All injected faults must be contained.
+RECOVERY_RATE,True,1.0,>=,0.9,Recoverable failures did not recover reliably.
+IDEMPOTENCY_RATE,True,1.0,>=,1.0,Duplicate or replay handling is not fully idempotent.
+UNHANDLED_FAILURE_RATE,True,0.0,<=,0.0,Unhandled failure rate exceeds the gate.
+STATE_CORRUPTION_EVENTS,True,0.0,<=,0.0,One or more injected failures corrupted state.
+FALSE_LIVE_EXECUTION_EVENTS,True,0.0,<=,0.0,A failure caused an unauthorized live-execution state.
+MAXIMUM_RECOVERY_TIME,True,305.92638699454255,<=,5000.0,Recovery time exceeded the operational threshold.
