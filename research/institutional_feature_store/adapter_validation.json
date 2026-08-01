@@ -1,0 +1,105 @@
+{
+  "schema_version": "13C.1.0",
+  "summary": {
+    "generated_at": "2026-08-01T03:04:14.271851+00:00",
+    "schema_version": "13C.1.0",
+    "rows": 1400,
+    "cycles": 14,
+    "unique_assets": 549,
+    "unique_tokens": 314,
+    "historical_rows": 1300,
+    "verified_live_rows": 100,
+    "verified_rows": 0,
+    "verified_with_warning_rows": 100,
+    "successful_quotes": 1397,
+    "quote_errors": 3,
+    "eligible_rows": 1,
+    "profitable_rows": 5,
+    "feature_count": 78,
+    "label_count": 7,
+    "rolling_window": 20,
+    "first_event_time": "2026-07-30T14:09:40.000+00:00",
+    "last_event_time": "2026-08-01T02:17:15.943+00:00",
+    "valid": true
+  },
+  "checks": [
+    {
+      "name": "minimum_rows",
+      "passed": true,
+      "observed": 1400,
+      "expected": ">= 1",
+      "details": "Feature-store row minimum."
+    },
+    {
+      "name": "minimum_cycles",
+      "passed": true,
+      "observed": 14,
+      "expected": ">= 1",
+      "details": "Feature-store cycle minimum."
+    },
+    {
+      "name": "unique_event_ids",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "institutional_event_id must be unique."
+    },
+    {
+      "name": "asset_key_completeness",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "All feature rows require asset_key."
+    },
+    {
+      "name": "verified_live_gate",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "Verified-live rows must pass the research eligibility gate."
+    },
+    {
+      "name": "chronology",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "Feature rows must be chronological."
+    },
+    {
+      "name": "feature_completeness",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "All declared feature columns must exist."
+    },
+    {
+      "name": "feature_finiteness",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "All numeric feature values must be finite."
+    },
+    {
+      "name": "label_completeness",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "All declared label columns must exist."
+    },
+    {
+      "name": "history_window_consistency",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "details": "Rolling counts cannot exceed prior counts or configured window."
+    },
+    {
+      "name": "cycle_reconciliation",
+      "passed": true,
+      "observed": 14,
+      "expected": 14,
+      "details": "Feature rows and cycle adapter rows must share identical cycle identities."
+    }
+  ],
+  "valid": true
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": "13C.1.0",
+  "generated_at": "2026-08-01T03:04:14.731907+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T03:04:14.271851+00:00",
+    "schema_version": "13C.1.0",
+    "rows": 1400,
+    "cycles": 14,
+    "unique_assets": 549,
+    "unique_tokens": 314,
+    "historical_rows": 1300,
+    "verified_live_rows": 100,
+    "verified_rows": 0,
+    "verified_with_warning_rows": 100,
+    "successful_quotes": 1397,
+    "quote_errors": 3,
+    "eligible_rows": 1,
+    "profitable_rows": 5,
+    "feature_count": 78,
+    "label_count": 7,
+    "rolling_window": 20,
+    "first_event_time": "2026-07-30T14:09:40.000+00:00",
+    "last_event_time": "2026-08-01T02:17:15.943+00:00",
+    "valid": true
+  },
+  "governance": {
+    "future_data_used": false,
+    "labels_used_as_features": false,
+    "verified_live_gate_enforced": true,
+    "demo_rows_included": false,
+    "raw_trading_state_modified": false
+  },
+  "files": {
+    "features.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_feature_store/features.csv",
+      "rows": 1400,
+      "bytes": 1574285,
+      "sha256": "0d12fb1e9315a8a055d9689ac3af6b45ed86108b0842836bcacb2d8e0f6b0c8d"
+    },
+    "features.jsonl": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_feature_store/features.jsonl",
+      "rows": 1400,
+      "bytes": 5336469,
+      "sha256": "63106a12aadce922e2382d49713738aef9bd96af292df0f762c47035bbee0ec0"
+    },
+    "cycles.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_feature_store/cycles.csv",
+      "rows": 14,
+      "bytes": 3914,
+      "sha256": "addcd05199ab8616318aa71a79c9c000d75dcd02503216d9bba6f1ecd608cfb9"
+    },
+    "feature_store_metadata.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_feature_store/feature_store_metadata.json",
+      "rows": null,
+      "bytes": 4456,
+      "sha256": "5a15501802d9e7adbad88cf628507d9d3b0a0186398d36df99a9d31c47cdb97f"
+    },
+    "adapter_validation.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_feature_store/adapter_validation.json",
+      "rows": 11,
+      "bytes": 2649,
+      "sha256": "66322cb2c3ca07150795dd8878e6943166e8bf2d061db51b570b65a4e498f4c0"
+    }
+  }
+}
