@@ -1,0 +1,62 @@
+{
+  "schema_version": "13E.1.0",
+  "generated_at": "2026-08-01T04:12:46.466016+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T04:12:46.109113+00:00",
+    "schema_version": "13E.1.0",
+    "input_trades": 5,
+    "monte_carlo_paths": 5000,
+    "deterministic_scenarios": 8,
+    "profitable_scenarios": 8,
+    "median_ending_capital_usd": 1000.0215623883396,
+    "fifth_percentile_ending_capital_usd": 999.9950438714742,
+    "ninety_fifth_percentile_ending_capital_usd": 1000.0576045366355,
+    "median_profit_usd": 0.02156238833959114,
+    "fifth_percentile_profit_usd": -0.004956128525852334,
+    "ninety_fifth_percentile_profit_usd": 0.05760453663553145,
+    "loss_probability": 0.1676,
+    "median_drawdown_percent": 0.0002560906650444395,
+    "ninety_fifth_percentile_drawdown_percent": 0.0006670617096388357,
+    "robustness_passed": true,
+    "promotion_decision": "BLOCK_ROBUSTNESS_PROMOTION",
+    "statistically_weak": true,
+    "weakness_reasons": [
+      "Fewer than 30 out-of-sample trades.",
+      "Phase 13D research promotion remains blocked."
+    ],
+    "live_execution_enabled": false,
+    "valid": true
+  },
+  "files": {
+    "robustness_scenarios.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/robustness_scenarios.csv",
+      "rows": 8,
+      "bytes": 1522,
+      "sha256": "68211b70b50efb486d4f2fe9f908005ea626dcb41066e1a1741a68ceae98c8a9"
+    },
+    "monte_carlo_paths.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/monte_carlo_paths.csv",
+      "rows": 25000,
+      "bytes": 2981250,
+      "sha256": "4660b69e6b933d0511954b5eb3121722ff580fe88501b6280cfa5ddd8719c531"
+    },
+    "monte_carlo_terminal_distribution.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/monte_carlo_terminal_distribution.csv",
+      "rows": 5000,
+      "bytes": 601239,
+      "sha256": "1e27af80a4ccad023dfe8db69e0bee02e8bae55463b64871fab0657f648eaa79"
+    },
+    "robustness_trade_stress.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/robustness_trade_stress.csv",
+      "rows": 40,
+      "bytes": 6837,
+      "sha256": "fe82c420a76a41f733420ed9fa213212bb0b4aa747e17e26e0beea7af9747592"
+    },
+    "institutional_robustness_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/institutional_robustness_report.json",
+      "rows": null,
+      "bytes": 7748,
+      "sha256": "3181cf4de5e12c73b816fb3700240596dc940eab4437a5a0e43e36902012c038"
+    }
+  }
+}
