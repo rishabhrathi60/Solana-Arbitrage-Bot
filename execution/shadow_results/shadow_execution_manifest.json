@@ -1,0 +1,105 @@
+{
+  "schema_version": "14A.2.0",
+  "generated_at": "2026-08-01T04:49:50.716+00:00",
+  "run_id": "e1bcfb7b-6cf2-4a73-8aae-6a4786a94534",
+  "summary": {
+    "generated_at": "2026-08-01T04:49:50.326+00:00",
+    "run_id": "e1bcfb7b-6cf2-4a73-8aae-6a4786a94534",
+    "schema_version": "14A.2.0",
+    "operating_mode": "SHADOW_EXECUTION_ONLY",
+    "source_trades": 5,
+    "attempts_per_trade": 100,
+    "shadow_attempts": 500,
+    "confirmed_executions": 463,
+    "failed_executions": 9,
+    "missed_executions": 28,
+    "stale_quote_attempts": 0,
+    "confirmation_rate": 0.926,
+    "stale_quote_rate": 0.0,
+    "total_failure_rate": 0.074,
+    "median_realized_profit_usd": -0.001570075545902452,
+    "mean_realized_profit_usd": 0.002923535023605183,
+    "fifth_percentile_realized_profit_usd": -0.005632542919241224,
+    "ninety_fifth_percentile_realized_profit_usd": 0.022772530110449406,
+    "total_realized_profit_usd": 1.3535967159291997,
+    "profitable_confirmations": 192,
+    "losing_confirmations": 271,
+    "initial_capital_usd": 1000.0,
+    "ending_capital_usd": 1001.3535967159289,
+    "maximum_drawdown_percent": 0.0709807983952788,
+    "operational_gate_passed": false,
+    "all_blocking_gates_passed": false,
+    "shadow_promotion_allowed": false,
+    "final_decision": "BLOCK_LIVE_EXECUTION",
+    "blocking_reasons": [
+      "Median shadow realized profit is negative.",
+      "Too few independent out-of-sample source trades.",
+      "Phase 13D walk-forward promotion remains blocked.",
+      "Phase 13F institutional live readiness remains blocked."
+    ],
+    "upstream": {
+      "walk_forward_promotion_allowed": false,
+      "robustness_passed": true,
+      "institutional_live_readiness_allowed": false,
+      "institutional_final_decision": "BLOCK_STRATEGY_PROMOTION_AND_LIVE_READINESS"
+    },
+    "safety": {
+      "live_execution_enabled": false,
+      "wallet_connection_authorized": false,
+      "transaction_signing_enabled": false,
+      "transaction_broadcasting_enabled": false,
+      "automatic_promotion_enabled": false
+    },
+    "valid": true
+  },
+  "inputs": {
+    "walk_forward_trades": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/walk_forward_trades.csv",
+      "sha256": "6150b3dc1dd4702712a805eebc6f288e21fbe9ed1137a7d1d52ed16d097c38ac"
+    },
+    "walk_forward_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json",
+      "sha256": "26d6d9a7dcc28d49eb0f298e8ceb382575bbbd732c385e4015bc810f2eb42839"
+    },
+    "robustness_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/institutional_robustness_report.json",
+      "sha256": "3181cf4de5e12c73b816fb3700240596dc940eab4437a5a0e43e36902012c038"
+    },
+    "promotion_decision": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json",
+      "sha256": "2f1d58be1377f1aec6a6cdd091035e42a31369894373c175b2cc68c851d6ac78"
+    }
+  },
+  "outputs": {
+    "shadow_execution_trades.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_trades.csv",
+      "rows": 5,
+      "bytes": 1955,
+      "sha256": "8e6b82d31f15df6b04cc643b8ae7dcf6da70af850fda74f9099c67e7ce74854b"
+    },
+    "shadow_execution_attempts.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_attempts.csv",
+      "rows": 500,
+      "bytes": 335958,
+      "sha256": "6dd9d89a57710246e68f662cf5e01e8986018cdd0bec2ea04c696c7d79cfd860"
+    },
+    "shadow_execution_equity_curve.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_equity_curve.csv",
+      "rows": 463,
+      "bytes": 112883,
+      "sha256": "676e2e3fae097a231be367ced0fdf296dc9be8c7937ce940f49692ef80ca21cb"
+    },
+    "shadow_execution_gate_checks.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_gate_checks.csv",
+      "rows": 11,
+      "bytes": 1095,
+      "sha256": "91be11f8df9d6b6f0489ca0610b8bbf3bafc94a3258214e6bdf3aba74a6ac91c"
+    },
+    "shadow_execution_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+      "rows": null,
+      "bytes": 6949,
+      "sha256": "94d4761a2f20016328a06cd79ea89688f6a21d4280aea5ff59e6f64ef77a58af"
+    }
+  }
+}
