@@ -1,6 +1,9 @@
 import time
 from datetime import datetime
-
+from execution.live_feature_logger import (
+    LiveFeatureLoggerConfiguration,
+    log_scanner_cycle,
+)
 import requests
 
 from database.ai_ranking import (
@@ -1081,6 +1084,57 @@ def run_one_scan_cycle():
                 "Fee simulator failure."
             ]
 
+    # Phase 12B — append-only live scanner feature logging.
+    # This does not change decisions, risk approvals, or execution behavior.
+    scanner_speed = (
+        len(results)
+        / elapsed_seconds
+        * 60.0
+        if elapsed_seconds > 0
+        else 0.0
+    )
+
+    try:
+        history_summary = (
+            get_opportunity_history_summary()
+        )
+
+        cycle_number = safe_int(
+            history_summary.get(
+                "scan_cycles"
+            )
+        )
+
+    except Exception:
+        cycle_number = 0
+
+    try:
+        results = log_scanner_cycle(
+            results,
+            cycle_context={
+                "cycle_id": cycle_id,
+                "cycle_number": cycle_number,
+                "cycle_started_at": scan_time,
+                "cycle_finished_at": current_timestamp(),
+                "elapsed_seconds": elapsed_seconds,
+                "scanner_speed": scanner_speed,
+            },
+            configuration=(
+                LiveFeatureLoggerConfiguration()
+            ),
+        )
+
+        print(
+            "Live scanner feature logging completed: "
+            f"{len(results)} observations."
+        )
+
+    except Exception as error:
+        print(
+            "Live scanner feature logging failed."
+        )
+        print(error)
+
     if snapshot_id:
         try:
             accuracy_result = (
@@ -1211,9 +1265,12 @@ def run_automatic_scanner():
         "Fee-Aware Execution Simulator: SIMULATION ONLY"
     )
     print(
+        "Live Scanner Feature Logging: ON"
+    )
+    print(
         "Learning order: "
         "SNAPSHOT → SCAN → CONTEXT → DECISION → RISK → FEES → "
-        "GRADE → HISTORY → INTELLIGENCE → PREDICTIONS"
+        "FEATURE LOG → GRADE → HISTORY → INTELLIGENCE → PREDICTIONS"
     )
     print(
         "AI opportunity ranking: ON"

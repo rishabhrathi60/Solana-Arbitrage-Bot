@@ -1,6 +1,7 @@
 import os
 import threading
 import time
+from datetime import datetime, timezone
 from concurrent.futures import (
     ThreadPoolExecutor,
     as_completed,
@@ -70,6 +71,98 @@ def safe_float(value):
         return 0.0
 
 
+def utc_now():
+    """
+    Return the current timezone-aware UTC time.
+    """
+
+    return datetime.now(timezone.utc)
+
+
+def utc_text(value=None):
+    """
+    Return an ISO-8601 UTC timestamp with millisecond precision.
+    """
+
+    timestamp = value or utc_now()
+
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(
+            tzinfo=timezone.utc
+        )
+
+    return timestamp.astimezone(
+        timezone.utc
+    ).isoformat(
+        timespec="milliseconds"
+    )
+
+
+def parse_quote_source_time(quote):
+    """
+    Read a provider timestamp when Jupiter supplies one.
+
+    Jupiter quote responses do not always include a source timestamp, so this
+    safely returns None when no recognized field exists.
+    """
+
+    if not isinstance(quote, dict):
+        return None
+
+    raw_value = (
+        quote.get("timestamp")
+        or quote.get("quoteTimestamp")
+        or quote.get("timeTakenAt")
+        or quote.get("createdAt")
+        or quote.get("contextTimestamp")
+    )
+
+    if raw_value is None:
+        return None
+
+    try:
+        if isinstance(raw_value, (int, float)):
+            numeric = float(raw_value)
+
+            if numeric > 10_000_000_000:
+                numeric /= 1_000.0
+
+            parsed = datetime.fromtimestamp(
+                numeric,
+                tz=timezone.utc,
+            )
+
+        else:
+            text = str(raw_value).strip()
+
+            if not text:
+                return None
+
+            if text.endswith("Z"):
+                text = text[:-1] + "+00:00"
+
+            parsed = datetime.fromisoformat(text)
+
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(
+                    tzinfo=timezone.utc
+                )
+
+            parsed = parsed.astimezone(
+                timezone.utc
+            )
+
+        return parsed
+
+    except (
+        OSError,
+        OverflowError,
+        TypeError,
+        ValueError,
+    ):
+        return None
+
+
 def get_thread_session():
     """
     Return one HTTP session for the current worker.
@@ -130,7 +223,17 @@ def get_quote(
     amount,
 ):
     """
-    Request a Jupiter quote with retries.
+    Request a Jupiter quote with retries and timing instrumentation.
+
+    The returned quote dictionary includes private instrumentation fields:
+      _quote_started_at
+      _quote_received_at
+      _quote_source_time
+      _quote_latency_ms
+      _quote_age_ms
+      _quote_attempts
+
+    These fields do not affect quote calculations or routing logic.
     """
 
     if not input_mint:
@@ -174,6 +277,11 @@ def get_quote(
     ):
         wait_for_quote_request_slot()
 
+        request_started_at = utc_now()
+        request_started_monotonic = (
+            time.perf_counter()
+        )
+
         try:
             response = session.get(
                 JUPITER_QUOTE_URL,
@@ -181,6 +289,16 @@ def get_quote(
                 timeout=(
                     REQUEST_TIMEOUT_SECONDS
                 ),
+            )
+
+            request_received_at = utc_now()
+            request_latency_ms = max(
+                0.0,
+                (
+                    time.perf_counter()
+                    - request_started_monotonic
+                )
+                * 1_000.0,
             )
 
             if response.status_code == 429:
@@ -266,7 +384,46 @@ def get_quote(
                     f"outAmount: {quote}"
                 )
 
-            return quote
+            source_time = parse_quote_source_time(
+                quote
+            )
+
+            quote_age_ms = (
+                max(
+                    0.0,
+                    (
+                        request_received_at
+                        - source_time
+                    ).total_seconds()
+                    * 1_000.0,
+                )
+                if source_time is not None
+                else 0.0
+            )
+
+            instrumented_quote = dict(quote)
+            instrumented_quote.update(
+                {
+                    "_quote_started_at": utc_text(
+                        request_started_at
+                    ),
+                    "_quote_received_at": utc_text(
+                        request_received_at
+                    ),
+                    "_quote_source_time": (
+                        utc_text(source_time)
+                        if source_time is not None
+                        else None
+                    ),
+                    "_quote_latency_ms": (
+                        request_latency_ms
+                    ),
+                    "_quote_age_ms": quote_age_ms,
+                    "_quote_attempts": attempt,
+                }
+            )
+
+            return instrumented_quote
 
         except (
             requests.Timeout,
@@ -413,6 +570,16 @@ def create_quote_error_result(
         "decision": "⚠️ QUOTE ERROR",
         "eligible": False,
         "quote_successful": False,
+        "quote_started_at": None,
+        "quote_received_at": utc_text(),
+        "quote_source_time": None,
+        "quote_latency_ms": 0.0,
+        "quote_age_ms": 0.0,
+        "quote_attempts": 0,
+        "buy_quote_latency_ms": 0.0,
+        "sell_quote_latency_ms": 0.0,
+        "buy_quote_age_ms": 0.0,
+        "sell_quote_age_ms": 0.0,
         "error": str(error),
         **build_model_fields(token),
     }
@@ -527,6 +694,98 @@ def scan_one_token(
         ),
         "eligible": eligible,
         "quote_successful": True,
+        "quote_started_at": (
+            buy_quote.get(
+                "_quote_started_at"
+            )
+        ),
+        "quote_received_at": (
+            sell_quote.get(
+                "_quote_received_at"
+            )
+        ),
+        "quote_source_time": (
+            sell_quote.get(
+                "_quote_source_time"
+            )
+            or buy_quote.get(
+                "_quote_source_time"
+            )
+        ),
+        "quote_latency_ms": (
+            safe_float(
+                buy_quote.get(
+                    "_quote_latency_ms"
+                )
+            )
+            + safe_float(
+                sell_quote.get(
+                    "_quote_latency_ms"
+                )
+            )
+        ),
+        "quote_age_ms": max(
+            safe_float(
+                buy_quote.get(
+                    "_quote_age_ms"
+                )
+            ),
+            safe_float(
+                sell_quote.get(
+                    "_quote_age_ms"
+                )
+            ),
+        ),
+        "quote_attempts": (
+            int(
+                safe_float(
+                    buy_quote.get(
+                        "_quote_attempts"
+                    )
+                )
+            )
+            + int(
+                safe_float(
+                    sell_quote.get(
+                        "_quote_attempts"
+                    )
+                )
+            )
+        ),
+        "buy_quote_latency_ms": safe_float(
+            buy_quote.get(
+                "_quote_latency_ms"
+            )
+        ),
+        "sell_quote_latency_ms": safe_float(
+            sell_quote.get(
+                "_quote_latency_ms"
+            )
+        ),
+        "buy_quote_age_ms": safe_float(
+            buy_quote.get(
+                "_quote_age_ms"
+            )
+        ),
+        "sell_quote_age_ms": safe_float(
+            sell_quote.get(
+                "_quote_age_ms"
+            )
+        ),
+        "buy_quote_attempts": int(
+            safe_float(
+                buy_quote.get(
+                    "_quote_attempts"
+                )
+            )
+        ),
+        "sell_quote_attempts": int(
+            safe_float(
+                sell_quote.get(
+                    "_quote_attempts"
+                )
+            )
+        ),
         "error": "",
         **build_model_fields(token),
     }
