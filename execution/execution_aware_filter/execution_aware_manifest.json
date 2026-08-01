@@ -1,0 +1,106 @@
+{
+  "schema_version": "14E.1.0",
+  "generated_at": "2026-08-01T05:48:00.183+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T05:48:00.108+00:00",
+    "schema_version": "14E.1.0",
+    "operating_mode": "EXECUTION_AWARE_RESEARCH_ONLY",
+    "source_trades": 5,
+    "accepted_trades": 1,
+    "rejected_trades": 4,
+    "acceptance_rate": 0.2,
+    "derived_minimum_quoted_profit_usd": 0.0075,
+    "derived_median_network_fee_usd": 0.0032268020659409645,
+    "derived_median_execution_penalty_usd": 0.001219365000023769,
+    "derived_median_total_degradation_usd": 0.004440557915504556,
+    "revalidation_attempts": 250,
+    "confirmed_revalidation_attempts": 234,
+    "confirmation_rate": 0.936,
+    "failure_rate": 0.064,
+    "profitable_confirmation_rate": 1.0,
+    "median_realized_profit_usd": 0.021398250063543515,
+    "mean_realized_profit_usd": 0.021577247526314118,
+    "total_realized_profit_usd": 5.049075921157503,
+    "single_trade_profit_concentration": 1.0,
+    "filter_passed": false,
+    "final_decision": "BLOCK_LIVE_EXECUTION",
+    "blocking_reasons": [
+      "One or more execution-aware filter gates failed.",
+      "Fewer than 30 independent out-of-sample source trades.",
+      "Phase 13D walk-forward promotion remains blocked.",
+      "Phase 13F live readiness remains blocked."
+    ],
+    "upstream": {
+      "phase_14a_operational_gate_passed": false,
+      "phase_14b_diagnostics_passed": false,
+      "phase_13d_promotion_allowed": false,
+      "phase_13f_live_readiness_allowed": false
+    },
+    "safety": {
+      "wallet_connected": false,
+      "transaction_signing_enabled": false,
+      "transaction_broadcasting_enabled": false,
+      "live_execution_enabled": false,
+      "automatic_promotion_enabled": false
+    },
+    "valid": true
+  },
+  "inputs": {
+    "shadow_attempts": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_attempts.csv",
+      "sha256": "6dd9d89a57710246e68f662cf5e01e8986018cdd0bec2ea04c696c7d79cfd860"
+    },
+    "diagnostics_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_execution_diagnostics_report.json",
+      "sha256": "14d025aefe6ffedc3422fe92430b3ede67c0e598b902236c3a421ccac5843818"
+    },
+    "walk_forward_trades": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/walk_forward_trades.csv",
+      "sha256": "6150b3dc1dd4702712a805eebc6f288e21fbe9ed1137a7d1d52ed16d097c38ac"
+    }
+  },
+  "outputs": {
+    "execution_aware_candidates.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_candidates.csv",
+      "rows": 1,
+      "bytes": 721,
+      "sha256": "50aca226d740643f075c693a707f8a1ba19357b762abdf3759778732267538a4"
+    },
+    "execution_aware_rejections.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_rejections.csv",
+      "rows": 4,
+      "bytes": 2286,
+      "sha256": "a1ba3e7e211087189019e34c502e50ba0e9df67e8237ba4fd8501afeb2d539ad"
+    },
+    "execution_aware_thresholds.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_thresholds.csv",
+      "rows": 7,
+      "bytes": 281,
+      "sha256": "fa1cc7dbc8a888e14f8968fea6b3653d561be74b36166abfdd97037f1a27f5c8"
+    },
+    "execution_aware_shadow_attempts.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_shadow_attempts.csv",
+      "rows": 250,
+      "bytes": 71676,
+      "sha256": "92b5288e3cb6d954a5935be75a509d5e8fe7074be507d6ada38ede5fbe2ca93c"
+    },
+    "execution_aware_shadow_trades.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_shadow_trades.csv",
+      "rows": 1,
+      "bytes": 422,
+      "sha256": "247548fd628bbd7d97991d49cea7f66811b57c2b8894833989f00c8354bd10ae"
+    },
+    "execution_aware_gate_checks.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_gate_checks.csv",
+      "rows": 7,
+      "bytes": 692,
+      "sha256": "7a050cead8fdf6d02ed0fb93af4e5dc678f75ce2e378d0c257e359cc30b0ae8d"
+    },
+    "execution_aware_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_report.json",
+      "rows": null,
+      "bytes": 5547,
+      "sha256": "d5de5cf8adddea3395f2cec92328b68fd09b1f4042dd82f50b2bdb7dd5eae0bd"
+    }
+  }
+}

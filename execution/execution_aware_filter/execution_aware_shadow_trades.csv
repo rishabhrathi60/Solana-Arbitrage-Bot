@@ -1,0 +1,2 @@
+candidate_index,event_id,cycle_id,token,asset_key,quoted_profit_usd,attempts,confirmed,confirmation_rate,profitable_confirmation_rate,median_realized_profit_usd,mean_realized_profit_usd,total_realized_profit_usd
+1,HISTORICAL:CYCLE-000006-20260730T214218000000:00000501,CYCLE-000006-20260730T214218000000,BOLT,SYMBOL:BOLT,0.025919000000000025,250,234,0.936,1.0,0.021398250063543515,0.021577247526314118,5.049075921157503

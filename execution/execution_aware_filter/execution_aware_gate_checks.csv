@@ -1,0 +1,8 @@
+name,passed,observed,comparison,required,message
+FILTERED_SOURCE_TRADES,False,1.0,>=,3.0,Too few source trades survive the execution-aware filter.
+CONFIRMED_REVALIDATION_ATTEMPTS,True,234.0,>=,100.0,Too few filtered shadow attempts confirmed.
+CONFIRMATION_RATE,True,0.936,>=,0.9,Filtered confirmation rate is below the gate.
+FAILURE_RATE,True,0.064,<=,0.15,Filtered failure rate exceeds the gate.
+PROFITABLE_CONFIRMATION_RATE,True,1.0,>=,0.6,Too few filtered confirmations remain profitable.
+MEDIAN_REALIZED_PROFIT,True,0.021398250063543515,>=,0.0,Filtered median realized profit remains negative.
+SINGLE_TRADE_CONCENTRATION,False,1.0,<=,0.6,Filtered profits remain too concentrated.

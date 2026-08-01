@@ -1,0 +1,148 @@
+{
+  "schema_version": "14E.1.0",
+  "summary": {
+    "generated_at": "2026-08-01T05:48:00.108+00:00",
+    "schema_version": "14E.1.0",
+    "operating_mode": "EXECUTION_AWARE_RESEARCH_ONLY",
+    "source_trades": 5,
+    "accepted_trades": 1,
+    "rejected_trades": 4,
+    "acceptance_rate": 0.2,
+    "derived_minimum_quoted_profit_usd": 0.0075,
+    "derived_median_network_fee_usd": 0.0032268020659409645,
+    "derived_median_execution_penalty_usd": 0.001219365000023769,
+    "derived_median_total_degradation_usd": 0.004440557915504556,
+    "revalidation_attempts": 250,
+    "confirmed_revalidation_attempts": 234,
+    "confirmation_rate": 0.936,
+    "failure_rate": 0.064,
+    "profitable_confirmation_rate": 1.0,
+    "median_realized_profit_usd": 0.021398250063543515,
+    "mean_realized_profit_usd": 0.021577247526314118,
+    "total_realized_profit_usd": 5.049075921157503,
+    "single_trade_profit_concentration": 1.0,
+    "filter_passed": false,
+    "final_decision": "BLOCK_LIVE_EXECUTION",
+    "blocking_reasons": [
+      "One or more execution-aware filter gates failed.",
+      "Fewer than 30 independent out-of-sample source trades.",
+      "Phase 13D walk-forward promotion remains blocked.",
+      "Phase 13F live readiness remains blocked."
+    ],
+    "upstream": {
+      "phase_14a_operational_gate_passed": false,
+      "phase_14b_diagnostics_passed": false,
+      "phase_13d_promotion_allowed": false,
+      "phase_13f_live_readiness_allowed": false
+    },
+    "safety": {
+      "wallet_connected": false,
+      "transaction_signing_enabled": false,
+      "transaction_broadcasting_enabled": false,
+      "live_execution_enabled": false,
+      "automatic_promotion_enabled": false
+    },
+    "valid": true
+  },
+  "configuration": {
+    "shadow_attempts": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_attempts.csv",
+    "shadow_trades": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_trades.csv",
+    "shadow_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+    "diagnostics_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_execution_diagnostics_report.json",
+    "walk_forward_trades": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/walk_forward_trades.csv",
+    "walk_forward_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json",
+    "promotion_decision": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json",
+    "output_directory": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter",
+    "overwrite": true,
+    "random_seed": 14005,
+    "attempts_per_trade": 250,
+    "safety_multiplier": 1.5,
+    "minimum_absolute_edge_usd": 0.005,
+    "minimum_net_edge_bps": 5.0,
+    "minimum_historical_profitable_rate": 0.5,
+    "maximum_historical_fee_share": 0.8,
+    "maximum_historical_penalty_share": 0.8,
+    "base_network_fee_usd": 0.0005,
+    "priority_fee_min_usd": 0.0002,
+    "priority_fee_max_usd": 0.005,
+    "additional_slippage_min_bps": 0.0,
+    "additional_slippage_max_bps": 15.0,
+    "adverse_move_min_bps": 0.0,
+    "adverse_move_max_bps": 10.0,
+    "miss_probability": 0.05,
+    "confirmation_probability": 0.985,
+    "minimum_filtered_trades": 3,
+    "minimum_confirmed_attempts": 100,
+    "minimum_confirmation_rate": 0.9,
+    "minimum_profitable_confirmation_rate": 0.6,
+    "minimum_median_realized_profit_usd": 0.0,
+    "maximum_single_trade_profit_concentration": 0.6,
+    "maximum_failure_rate": 0.15
+  },
+  "gate_checks": [
+    {
+      "name": "FILTERED_SOURCE_TRADES",
+      "passed": false,
+      "observed": 1.0,
+      "comparison": ">=",
+      "required": 3.0,
+      "message": "Too few source trades survive the execution-aware filter."
+    },
+    {
+      "name": "CONFIRMED_REVALIDATION_ATTEMPTS",
+      "passed": true,
+      "observed": 234.0,
+      "comparison": ">=",
+      "required": 100.0,
+      "message": "Too few filtered shadow attempts confirmed."
+    },
+    {
+      "name": "CONFIRMATION_RATE",
+      "passed": true,
+      "observed": 0.936,
+      "comparison": ">=",
+      "required": 0.9,
+      "message": "Filtered confirmation rate is below the gate."
+    },
+    {
+      "name": "FAILURE_RATE",
+      "passed": true,
+      "observed": 0.064,
+      "comparison": "<=",
+      "required": 0.15,
+      "message": "Filtered failure rate exceeds the gate."
+    },
+    {
+      "name": "PROFITABLE_CONFIRMATION_RATE",
+      "passed": true,
+      "observed": 1.0,
+      "comparison": ">=",
+      "required": 0.6,
+      "message": "Too few filtered confirmations remain profitable."
+    },
+    {
+      "name": "MEDIAN_REALIZED_PROFIT",
+      "passed": true,
+      "observed": 0.021398250063543515,
+      "comparison": ">=",
+      "required": 0.0,
+      "message": "Filtered median realized profit remains negative."
+    },
+    {
+      "name": "SINGLE_TRADE_CONCENTRATION",
+      "passed": false,
+      "observed": 1.0,
+      "comparison": "<=",
+      "required": 0.6,
+      "message": "Filtered profits remain too concentrated."
+    }
+  ],
+  "governance": {
+    "research_only": true,
+    "wallet_connection_authorized": false,
+    "transaction_signing_enabled": false,
+    "transaction_broadcasting_enabled": false,
+    "live_execution_enabled": false,
+    "automatic_promotion_enabled": false
+  }
+}

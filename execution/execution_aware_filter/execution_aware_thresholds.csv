@@ -1,0 +1,8 @@
+threshold,value
+median_network_fee_usd,0.0032268020659409645
+median_execution_penalty_usd,0.001219365000023769
+median_total_degradation_usd,0.004440557915504556
+safety_multiplier,1.5
+minimum_absolute_edge_usd,0.005
+minimum_quoted_profit_usd,0.0075
+minimum_net_edge_bps,5.0
