@@ -642,19 +642,20 @@ class PostFilterReadinessGate:
                 name="PHASE_14D_SECURITY_GATE",
                 passed=safe_bool(
                     phase_14d_summary.get(
-                        "security_audit_passed"
+                        "security_controls_passed"
                     )
                 ),
                 blocking=True,
                 observed=safe_bool(
                     phase_14d_summary.get(
-                        "security_audit_passed"
+                        "security_controls_passed"
                     )
                 ),
                 comparison="==",
                 required=True,
                 message=(
-                    "Phase 14D security audit remains blocked."
+                    "Phase 14D independent security controls "
+                    "remain blocked."
                 ),
                 source=str(
                     self.config.phase_14d_report

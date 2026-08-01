@@ -1,12 +1,12 @@
 {
   "schema_version": "14F.1.0",
   "summary": {
-    "generated_at": "2026-08-01T06:09:14.423+00:00",
+    "generated_at": "2026-08-01T14:48:49.899+00:00",
     "schema_version": "14F.1.0",
     "operating_mode": "POST_FILTER_GOVERNANCE_ONLY",
     "gate_checks": 17,
-    "gate_checks_passed": 4,
-    "blocking_failures": 13,
+    "gate_checks_passed": 5,
+    "blocking_failures": 12,
     "blocking_reasons": [
       "Phase 13F institutional live readiness remains blocked.",
       "Collect more institutional observations.",
@@ -17,12 +17,11 @@
       "Collect more independent out-of-sample trades.",
       "Phase 14A operational shadow gate remains blocked.",
       "Phase 14B edge diagnostics remain blocked.",
-      "Phase 14D security audit remains blocked.",
       "Too few independent trades survive the execution-aware filter.",
       "Filtered profits remain too concentrated in one source trade.",
       "Phase 14E execution-aware filter remains blocked."
     ],
-    "operational_controls_passed": false,
+    "operational_controls_passed": true,
     "post_filter_economics_passed": false,
     "evidence_sufficiency_passed": false,
     "post_filter_readiness_allowed": false,
@@ -30,12 +29,12 @@
     "promotion_allowed": false,
     "final_decision": "BLOCK_LIVE_EXECUTION",
     "evidence": {
-      "institutional_rows": 0,
-      "institutional_cycles": 0,
-      "profitable_observations": 0,
-      "verified_live_rows": 0,
-      "verified_live_cycles": 0,
-      "out_of_sample_trades": 0,
+      "institutional_rows": 2000,
+      "institutional_cycles": 25,
+      "profitable_observations": 5,
+      "verified_live_rows": 700,
+      "verified_live_cycles": 12,
+      "out_of_sample_trades": 5,
       "accepted_filtered_trades": 1,
       "filtered_profitable_confirmation_rate": 1.0,
       "filtered_median_realized_profit_usd": 0.021398250063543515,
@@ -94,7 +93,7 @@
       "name": "INSTITUTIONAL_ROWS",
       "passed": false,
       "blocking": true,
-      "observed": 0,
+      "observed": 2000,
       "comparison": ">=",
       "required": 10000,
       "message": "Collect more institutional observations.",
@@ -105,7 +104,7 @@
       "name": "INSTITUTIONAL_CYCLES",
       "passed": false,
       "blocking": true,
-      "observed": 0,
+      "observed": 25,
       "comparison": ">=",
       "required": 100,
       "message": "Collect more complete institutional scanner cycles.",
@@ -116,7 +115,7 @@
       "name": "PROFITABLE_OBSERVATIONS",
       "passed": false,
       "blocking": true,
-      "observed": 0,
+      "observed": 5,
       "comparison": ">=",
       "required": 100,
       "message": "Collect more genuinely profitable observations.",
@@ -127,7 +126,7 @@
       "name": "VERIFIED_LIVE_ROWS",
       "passed": false,
       "blocking": true,
-      "observed": 0,
+      "observed": 700,
       "comparison": ">=",
       "required": 1000,
       "message": "Collect more verified-live observations.",
@@ -138,7 +137,7 @@
       "name": "VERIFIED_LIVE_CYCLES",
       "passed": false,
       "blocking": true,
-      "observed": 0,
+      "observed": 12,
       "comparison": ">=",
       "required": 20,
       "message": "Collect more verified-live scanner cycles.",
@@ -149,7 +148,7 @@
       "name": "OUT_OF_SAMPLE_TRADES",
       "passed": false,
       "blocking": true,
-      "observed": 0,
+      "observed": 5,
       "comparison": ">=",
       "required": 50,
       "message": "Collect more independent out-of-sample trades.",
@@ -191,12 +190,12 @@
     {
       "category": "SECURITY",
       "name": "PHASE_14D_SECURITY_GATE",
-      "passed": false,
+      "passed": true,
       "blocking": true,
-      "observed": false,
+      "observed": true,
       "comparison": "==",
       "required": true,
-      "message": "Phase 14D security audit remains blocked.",
+      "message": "Phase 14D independent security controls remain blocked.",
       "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/live_readiness_audit_report.json"
     },
     {
@@ -269,32 +268,32 @@
   "evidence_summary": [
     {
       "metric": "institutional_rows",
-      "value": 0,
+      "value": 2000,
       "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json"
     },
     {
       "metric": "institutional_cycles",
-      "value": 0,
+      "value": 25,
       "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json"
     },
     {
       "metric": "profitable_observations",
-      "value": 0,
+      "value": 5,
       "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json"
     },
     {
       "metric": "verified_live_rows",
-      "value": 0,
+      "value": 700,
       "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json"
     },
     {
       "metric": "verified_live_cycles",
-      "value": 0,
+      "value": 12,
       "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json"
     },
     {
       "metric": "out_of_sample_trades",
-      "value": 0,
+      "value": 5,
       "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json"
     },
     {

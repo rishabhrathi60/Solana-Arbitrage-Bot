@@ -597,6 +597,32 @@ class LiveReadinessAudit:
 
         audit_passed = not blocking_failures
 
+        # Independent security-controls result.
+        #
+        # This intentionally excludes upstream research, economics and
+        # promotion gates. It answers only whether repository secrets,
+        # wallet isolation, kill-switch controls and the no-live-state
+        # invariant are secure.
+        security_control_names = {
+            "NO_COMMITTED_SECRET_FINDINGS",
+            "GITIGNORE_SECRET_COVERAGE",
+            "WALLET_ISOLATION_CONTROLS",
+            "KILL_SWITCH_CONTROLS",
+            "NO_LIVE_EXECUTION_STATE",
+        }
+
+        security_controls_passed = all(
+            gate.passed
+            for gate in gates
+            if gate.name in security_control_names
+        ) and all(
+            any(
+                gate.name == required_name
+                for gate in gates
+            )
+            for required_name in security_control_names
+        )
+
         summary = {
             "generated_at": utc_now(),
             "schema_version": SCHEMA_VERSION,
@@ -638,6 +664,9 @@ class LiveReadinessAudit:
                 gate.message
                 for gate in blocking_failures
             ],
+            "security_controls_passed": (
+                security_controls_passed
+            ),
             "security_audit_passed": audit_passed,
             "final_decision": (
                 "ELIGIBLE_FOR_TINY_LIVE_PILOT_REVIEW"

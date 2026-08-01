@@ -1,12 +1,12 @@
 {
   "schema_version": "14D.1.0",
   "summary": {
-    "generated_at": "2026-08-01T05:42:24.000+00:00",
+    "generated_at": "2026-08-01T14:48:49.650+00:00",
     "schema_version": "14D.1.0",
     "operating_mode": "SECURITY_AUDIT_ONLY",
     "repository_root": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot",
-    "files_scanned": 3,
-    "secret_findings": 13,
+    "files_scanned": 5,
+    "secret_findings": 15,
     "critical_secret_findings": 0,
     "wallet_findings": 7,
     "wallet_findings_passed": 7,
@@ -20,6 +20,7 @@
       "Phase 14A operational shadow gate remains blocked.",
       "Phase 14B edge decomposition remains blocked."
     ],
+    "security_controls_passed": true,
     "security_audit_passed": false,
     "final_decision": "BLOCK_LIVE_EXECUTION",
     "upstream": {

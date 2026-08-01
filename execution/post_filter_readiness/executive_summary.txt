@@ -2,19 +2,19 @@ Phase 14F — Consolidated Post-Filter Readiness Gate
 ================================================================================
 
 Final decision: BLOCK_LIVE_EXECUTION
-Operational controls passed: False
+Operational controls passed: True
 Post-filter economics passed: False
 Evidence sufficiency passed: False
 Live readiness allowed: False
 
 Evidence
 --------------------------------------------------------------------------------
-institutional_rows: 0
-institutional_cycles: 0
-profitable_observations: 0
-verified_live_rows: 0
-verified_live_cycles: 0
-out_of_sample_trades: 0
+institutional_rows: 2000
+institutional_cycles: 25
+profitable_observations: 5
+verified_live_rows: 700
+verified_live_cycles: 12
+out_of_sample_trades: 5
 accepted_filtered_trades: 1
 filtered_profitable_confirmation_rate: 1.0
 filtered_median_realized_profit_usd: 0.021398250063543515
@@ -31,7 +31,6 @@ Blocking reasons
 - Collect more independent out-of-sample trades.
 - Phase 14A operational shadow gate remains blocked.
 - Phase 14B edge diagnostics remain blocked.
-- Phase 14D security audit remains blocked.
 - Too few independent trades survive the execution-aware filter.
 - Filtered profits remain too concentrated in one source trade.
 - Phase 14E execution-aware filter remains blocked.
