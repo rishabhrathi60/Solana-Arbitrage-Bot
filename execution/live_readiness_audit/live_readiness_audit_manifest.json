@@ -1,8 +1,8 @@
 {
   "schema_version": "14D.1.0",
-  "generated_at": "2026-08-01T05:36:58.623+00:00",
+  "generated_at": "2026-08-01T05:42:24.009+00:00",
   "summary": {
-    "generated_at": "2026-08-01T05:36:58.612+00:00",
+    "generated_at": "2026-08-01T05:42:24.000+00:00",
     "schema_version": "14D.1.0",
     "operating_mode": "SECURITY_AUDIT_ONLY",
     "repository_root": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot",
@@ -101,7 +101,7 @@
       "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/live_readiness_audit_report.json",
       "rows": null,
       "bytes": 9823,
-      "sha256": "090c0748a4f3190520c014b3cb166046ca879f29eda1b12d07d6a771835e3882"
+      "sha256": "de970a2a50b26e23413586fc6a7fc9d067e9594ca8b22fce3b68a9b6d182f418"
     },
     "executive_summary.txt": {
       "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/executive_summary.txt",
