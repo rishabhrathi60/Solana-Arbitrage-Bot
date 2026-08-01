@@ -1,0 +1,329 @@
+{
+  "schema_version": "13F.1.0",
+  "generated_at": "2026-08-01T04:19:53.390684+00:00",
+  "evidence": {
+    "phase_10c": {
+      "report_present": true,
+      "passed": false,
+      "raw_summary": {}
+    },
+    "institutional_dataset": {
+      "valid": true,
+      "total_rows": 1400,
+      "total_cycles": 14,
+      "verified_live_rows": 100,
+      "verified_live_cycles": 1,
+      "profitable_observations": 5,
+      "raw_summary": {
+        "generated_at": "2026-08-01T02:54:33.488586+00:00",
+        "schema_version": "13B.1.0",
+        "total_rows": 1400,
+        "total_cycles": 14,
+        "unique_assets": 549,
+        "unique_tokens": 314,
+        "historical_rows": 1300,
+        "historical_cycles": 13,
+        "verified_live_rows": 100,
+        "verified_live_cycles": 1,
+        "verified_rows": 0,
+        "verified_with_warning_rows": 100,
+        "unvalidated_historical_rows": 1300,
+        "successful_quotes": 1397,
+        "quote_errors": 3,
+        "eligible_observations": 1,
+        "profitable_observations": 5,
+        "average_net_profit_usd": -0.0056602634216177524,
+        "best_net_profit_usd": 0.025919000000000025,
+        "worst_net_profit_usd": -0.20155100000000004,
+        "average_total_cost_bps": 20.0,
+        "average_quote_latency_ms": 12.368469918317562,
+        "duplicate_rows_removed": 0,
+        "demo_rows_excluded": 0,
+        "invalid_rows_excluded": 0,
+        "first_event_time": "2026-07-30T14:09:40.000+00:00",
+        "last_event_time": "2026-08-01T02:17:15.943+00:00",
+        "valid": true
+      }
+    },
+    "feature_store": {
+      "valid": true,
+      "rows": 1400,
+      "cycles": 14,
+      "raw_summary": {
+        "generated_at": "2026-08-01T03:04:14.271851+00:00",
+        "schema_version": "13C.1.0",
+        "rows": 1400,
+        "cycles": 14,
+        "unique_assets": 549,
+        "unique_tokens": 314,
+        "historical_rows": 1300,
+        "verified_live_rows": 100,
+        "verified_rows": 0,
+        "verified_with_warning_rows": 100,
+        "successful_quotes": 1397,
+        "quote_errors": 3,
+        "eligible_rows": 1,
+        "profitable_rows": 5,
+        "feature_count": 78,
+        "label_count": 7,
+        "rolling_window": 20,
+        "first_event_time": "2026-07-30T14:09:40.000+00:00",
+        "last_event_time": "2026-08-01T02:17:15.943+00:00",
+        "valid": true
+      }
+    },
+    "walk_forward": {
+      "promotion_allowed": false,
+      "promotion_decision": "BLOCK_RESEARCH_PROMOTION",
+      "folds_completed": 5,
+      "profitable_folds": 3,
+      "out_of_sample_trades": 5,
+      "out_of_sample_profit_usd": 0.03574000000000011,
+      "out_of_sample_profit_factor": 1000000000000.0,
+      "out_of_sample_maximum_drawdown_percent": 0.0,
+      "statistically_weak": true,
+      "weakness_reasons": [
+        "Fewer than 30 institutional cycles.",
+        "Fewer than 30 profitable observations.",
+        "Fewer than 30 out-of-sample selected trades.",
+        "One or more promotion checks failed."
+      ]
+    },
+    "robustness": {
+      "robustness_passed": true,
+      "promotion_decision": "BLOCK_ROBUSTNESS_PROMOTION",
+      "input_trades": 5,
+      "monte_carlo_paths": 5000,
+      "loss_probability": 0.1676,
+      "median_profit_usd": 0.02156238833959114,
+      "profitable_scenarios": 8,
+      "statistically_weak": true,
+      "weakness_reasons": [
+        "Fewer than 30 out-of-sample trades.",
+        "Phase 13D research promotion remains blocked."
+      ]
+    }
+  },
+  "checks": [
+    {
+      "category": "FOUNDATION",
+      "name": "PHASE_10C_DATA_SUFFICIENCY",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "message": "Historical evidence remains below the hard Phase 10C sufficiency gate.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/backtesting/readiness/data_sufficiency_report.json"
+    },
+    {
+      "category": "DATASET",
+      "name": "INSTITUTIONAL_DATASET_VALID",
+      "passed": true,
+      "blocking": true,
+      "observed": true,
+      "comparison": "==",
+      "required": true,
+      "message": "The canonical institutional dataset must pass validation.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_dataset_validation.json"
+    },
+    {
+      "category": "DATASET",
+      "name": "INSTITUTIONAL_ROWS",
+      "passed": false,
+      "blocking": true,
+      "observed": 1400,
+      "comparison": ">=",
+      "required": 10000,
+      "message": "Collect more canonical institutional observations.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_dataset_manifest.json"
+    },
+    {
+      "category": "DATASET",
+      "name": "INSTITUTIONAL_CYCLES",
+      "passed": false,
+      "blocking": true,
+      "observed": 14,
+      "comparison": ">=",
+      "required": 100,
+      "message": "Collect more complete institutional scanner cycles.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_dataset_manifest.json"
+    },
+    {
+      "category": "DATASET",
+      "name": "PROFITABLE_OBSERVATIONS",
+      "passed": false,
+      "blocking": true,
+      "observed": 5,
+      "comparison": ">=",
+      "required": 100,
+      "message": "Collect more genuinely profitable observations.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_dataset_manifest.json"
+    },
+    {
+      "category": "VERIFIED_LIVE",
+      "name": "VERIFIED_LIVE_ROWS",
+      "passed": false,
+      "blocking": true,
+      "observed": 100,
+      "comparison": ">=",
+      "required": 1000,
+      "message": "Collect more verified-live feature rows.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_dataset_manifest.json"
+    },
+    {
+      "category": "VERIFIED_LIVE",
+      "name": "VERIFIED_LIVE_CYCLES",
+      "passed": false,
+      "blocking": true,
+      "observed": 1,
+      "comparison": ">=",
+      "required": 20,
+      "message": "Collect more verified-live scanner cycles.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_dataset_manifest.json"
+    },
+    {
+      "category": "FEATURE_STORE",
+      "name": "FEATURE_STORE_VALID",
+      "passed": true,
+      "blocking": true,
+      "observed": true,
+      "comparison": "==",
+      "required": true,
+      "message": "The institutional feature store must pass validation.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_feature_store/adapter_validation.json"
+    },
+    {
+      "category": "WALK_FORWARD",
+      "name": "COMPLETED_FOLDS",
+      "passed": true,
+      "blocking": true,
+      "observed": 5,
+      "comparison": ">=",
+      "required": 5,
+      "message": "Enough chronological walk-forward folds must complete.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json"
+    },
+    {
+      "category": "WALK_FORWARD",
+      "name": "PROFITABLE_FOLDS",
+      "passed": true,
+      "blocking": true,
+      "observed": 3,
+      "comparison": ">=",
+      "required": 3,
+      "message": "Multiple walk-forward folds must remain profitable.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json"
+    },
+    {
+      "category": "WALK_FORWARD",
+      "name": "OUT_OF_SAMPLE_TRADES",
+      "passed": false,
+      "blocking": true,
+      "observed": 5,
+      "comparison": ">=",
+      "required": 50,
+      "message": "Collect more out-of-sample trade examples.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json"
+    },
+    {
+      "category": "WALK_FORWARD",
+      "name": "OUT_OF_SAMPLE_PROFIT",
+      "passed": true,
+      "blocking": true,
+      "observed": 0.03574000000000011,
+      "comparison": ">=",
+      "required": 0.01,
+      "message": "Out-of-sample profit must remain positive.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json"
+    },
+    {
+      "category": "WALK_FORWARD",
+      "name": "OUT_OF_SAMPLE_PROFIT_FACTOR",
+      "passed": true,
+      "blocking": true,
+      "observed": 1000000000000.0,
+      "comparison": ">=",
+      "required": 1.1,
+      "message": "Out-of-sample profit factor must exceed the promotion threshold.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json"
+    },
+    {
+      "category": "WALK_FORWARD",
+      "name": "OUT_OF_SAMPLE_DRAWDOWN",
+      "passed": true,
+      "blocking": true,
+      "observed": 0.0,
+      "comparison": "<=",
+      "required": 10.0,
+      "message": "Out-of-sample drawdown must remain controlled.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json"
+    },
+    {
+      "category": "WALK_FORWARD",
+      "name": "WALK_FORWARD_PROMOTION",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "message": "Phase 13D walk-forward promotion remains blocked.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json"
+    },
+    {
+      "category": "ROBUSTNESS",
+      "name": "MONTE_CARLO_PATHS",
+      "passed": true,
+      "blocking": true,
+      "observed": 5000,
+      "comparison": ">=",
+      "required": 5000,
+      "message": "Enough Monte Carlo paths must complete.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/institutional_robustness_report.json"
+    },
+    {
+      "category": "ROBUSTNESS",
+      "name": "MONTE_CARLO_LOSS_PROBABILITY",
+      "passed": true,
+      "blocking": true,
+      "observed": 0.1676,
+      "comparison": "<=",
+      "required": 0.4,
+      "message": "Monte Carlo loss probability must remain below the gate.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/institutional_robustness_report.json"
+    },
+    {
+      "category": "ROBUSTNESS",
+      "name": "MEDIAN_STRESSED_PROFIT",
+      "passed": true,
+      "blocking": true,
+      "observed": 0.02156238833959114,
+      "comparison": ">=",
+      "required": 0.01,
+      "message": "Median stressed profit must remain positive.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/institutional_robustness_report.json"
+    },
+    {
+      "category": "ROBUSTNESS",
+      "name": "PROFITABLE_STRESS_SCENARIOS",
+      "passed": true,
+      "blocking": true,
+      "observed": 8,
+      "comparison": ">=",
+      "required": 3,
+      "message": "Multiple deterministic stress scenarios must remain profitable.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/institutional_robustness_report.json"
+    },
+    {
+      "category": "ROBUSTNESS",
+      "name": "ROBUSTNESS_PROMOTION",
+      "passed": true,
+      "blocking": true,
+      "observed": true,
+      "comparison": "==",
+      "required": true,
+      "message": "Phase 13E robustness validation must pass.",
+      "source": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/institutional_robustness_report.json"
+    }
+  ]
+}

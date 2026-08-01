@@ -1,0 +1,32 @@
+Phase 13F — Institutional Evidence and Promotion Gate
+================================================================================
+
+Final decision: BLOCK_STRATEGY_PROMOTION_AND_LIVE_READINESS
+Research promotion allowed: False
+Live readiness allowed: False
+
+Evidence
+--------------------------------------------------------------------------------
+Institutional rows / cycles: 1400 / 14
+Verified-live rows / cycles: 100 / 1
+Profitable observations: 5
+Walk-forward folds / profitable folds: 5 / 3
+Out-of-sample trades / profit: 5 / $0.035740
+Monte Carlo paths / loss probability: 5000 / 16.76%
+
+Blocking reasons
+--------------------------------------------------------------------------------
+- PHASE_10C_DATA_SUFFICIENCY: Historical evidence remains below the hard Phase 10C sufficiency gate. (observed=False, required == True)
+- INSTITUTIONAL_ROWS: Collect more canonical institutional observations. (observed=1400, required >= 10000)
+- INSTITUTIONAL_CYCLES: Collect more complete institutional scanner cycles. (observed=14, required >= 100)
+- PROFITABLE_OBSERVATIONS: Collect more genuinely profitable observations. (observed=5, required >= 100)
+- VERIFIED_LIVE_ROWS: Collect more verified-live feature rows. (observed=100, required >= 1000)
+- VERIFIED_LIVE_CYCLES: Collect more verified-live scanner cycles. (observed=1, required >= 20)
+- OUT_OF_SAMPLE_TRADES: Collect more out-of-sample trade examples. (observed=5, required >= 50)
+- WALK_FORWARD_PROMOTION: Phase 13D walk-forward promotion remains blocked. (observed=False, required == True)
+
+Governance
+--------------------------------------------------------------------------------
+Live execution remains disabled by this report.
+Wallet connection is not authorized by this report.
+No automatic strategy promotion is performed.

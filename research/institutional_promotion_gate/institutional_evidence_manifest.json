@@ -1,0 +1,103 @@
+{
+  "schema_version": "13F.1.0",
+  "generated_at": "2026-08-01T04:19:53.401855+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T04:19:53.388704+00:00",
+    "schema_version": "13F.1.0",
+    "operating_mode": "PAPER_RESEARCH_GOVERNANCE",
+    "final_decision": "BLOCK_STRATEGY_PROMOTION_AND_LIVE_READINESS",
+    "research_promotion_allowed": false,
+    "live_readiness_allowed": false,
+    "checks_run": 20,
+    "checks_passed": 12,
+    "checks_failed": 8,
+    "blocking_failures": 8,
+    "blocking_reasons": [
+      "Historical evidence remains below the hard Phase 10C sufficiency gate.",
+      "Collect more canonical institutional observations.",
+      "Collect more complete institutional scanner cycles.",
+      "Collect more genuinely profitable observations.",
+      "Collect more verified-live feature rows.",
+      "Collect more verified-live scanner cycles.",
+      "Collect more out-of-sample trade examples.",
+      "Phase 13D walk-forward promotion remains blocked."
+    ],
+    "live_execution_enabled": false,
+    "wallet_connection_authorized": false,
+    "automatic_promotion_enabled": false,
+    "valid": true
+  },
+  "source_evidence": {
+    "phase_10c": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/backtesting/readiness/data_sufficiency_report.json",
+      "exists": true,
+      "bytes": 7192,
+      "sha256": "58df57a36a6013ad87b724873f4ca79440dcf3ac26f94a2a4d189b4bcb8e68e8"
+    },
+    "dataset_validation": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_dataset_validation.json",
+      "exists": true,
+      "bytes": 3170,
+      "sha256": "891fa50227918f0fa8698e686cb2adcdd6883a88221bdea90b3e8171ea932f57"
+    },
+    "dataset_manifest": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_dataset/institutional_dataset_manifest.json",
+      "exists": true,
+      "bytes": 3345,
+      "sha256": "bd22f8e08919b7290d440b6205bbd373bc1f3c3438375b4d3c95445a5a1b4c67"
+    },
+    "feature_validation": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_feature_store/adapter_validation.json",
+      "exists": true,
+      "bytes": 2649,
+      "sha256": "66322cb2c3ca07150795dd8878e6943166e8bf2d061db51b570b65a4e498f4c0"
+    },
+    "feature_manifest": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_feature_store/feature_manifest.json",
+      "exists": true,
+      "bytes": 2317,
+      "sha256": "4fabb7ab77abbe2512760d05ca5306bea62615e5fdf828e61fc7b47ce53f21b4"
+    },
+    "walk_forward_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_walk_forward/institutional_walk_forward_report.json",
+      "exists": true,
+      "bytes": 7083,
+      "sha256": "26d6d9a7dcc28d49eb0f298e8ceb382575bbbd732c385e4015bc810f2eb42839"
+    },
+    "robustness_report": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_robustness/institutional_robustness_report.json",
+      "exists": true,
+      "bytes": 7748,
+      "sha256": "3181cf4de5e12c73b816fb3700240596dc940eab4437a5a0e43e36902012c038"
+    }
+  },
+  "outputs": {
+    "institutional_evidence_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_evidence_report.json",
+      "bytes": 11689,
+      "sha256": "2cb01b8df25d73b4d26e29bb61a937b766e0959c2cbdc63de8888bd9d2ead56b"
+    },
+    "institutional_promotion_decision.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json",
+      "bytes": 853,
+      "sha256": "2f1d58be1377f1aec6a6cdd091035e42a31369894373c175b2cc68c851d6ac78"
+    },
+    "institutional_gate_checks.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_gate_checks.csv",
+      "bytes": 4566,
+      "sha256": "8d121545a0eb6ede9b07e7bbe0b451e7e96c7dd0ae3ea1bf3c33fd2a051687bb"
+    },
+    "executive_summary.txt": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/executive_summary.txt",
+      "bytes": 1791,
+      "sha256": "681dbfdec25acdf599076ea6335de2a7ced8c01b3185887525a88b790e306928"
+    }
+  },
+  "governance": {
+    "live_execution_enabled": false,
+    "wallet_connection_authorized": false,
+    "automatic_promotion_enabled": false,
+    "manual_security_review_required": true,
+    "tiny_live_pilot_requires_separate_approval": true
+  }
+}

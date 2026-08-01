@@ -1,0 +1,21 @@
+{
+  "schema_version": "13F.1.0",
+  "generated_at": "2026-08-01T04:19:53.391994+00:00",
+  "final_decision": "BLOCK_STRATEGY_PROMOTION_AND_LIVE_READINESS",
+  "research_promotion_allowed": false,
+  "live_readiness_allowed": false,
+  "blocking_failures": 8,
+  "blocking_reasons": [
+    "Historical evidence remains below the hard Phase 10C sufficiency gate.",
+    "Collect more canonical institutional observations.",
+    "Collect more complete institutional scanner cycles.",
+    "Collect more genuinely profitable observations.",
+    "Collect more verified-live feature rows.",
+    "Collect more verified-live scanner cycles.",
+    "Collect more out-of-sample trade examples.",
+    "Phase 13D walk-forward promotion remains blocked."
+  ],
+  "live_execution_enabled": false,
+  "wallet_connection_authorized": false,
+  "automatic_promotion_enabled": false
+}
