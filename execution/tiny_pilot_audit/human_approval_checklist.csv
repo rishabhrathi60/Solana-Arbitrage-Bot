@@ -1,0 +1,7 @@
+item_id,category,description,required,approved,approver,approved_at,evidence_reference,blocking
+APPROVAL_001,RESEARCH,Independent evidence and post-filter readiness have passed all required gates.,True,False,,,Phases 13F and 14A-14F,True
+APPROVAL_002,SECURITY,"Wallet isolation, secret handling, and kill-switch controls have been manually reviewed.",True,False,,,Phase 14D,True
+APPROVAL_003,RISK,"Maximum $5 trade, $20 daily notional, $2 daily loss, and four-trade daily limits are approved.",True,False,,,tiny_pilot_configuration.json,True
+APPROVAL_004,OPERATIONS,"A named operator is assigned to start, observe, and stop the pilot manually.",True,False,,,Manual operating procedure,True
+APPROVAL_005,INCIDENT_RESPONSE,Emergency-stop procedure and incident escalation contacts are documented and reviewed.,True,False,,,Phase 14C and operating procedure,True
+APPROVAL_006,FINAL_AUTHORIZATION,Explicit human authorization for a tiny live pilot has been recorded outside the bot.,True,False,,,External signed approval,True

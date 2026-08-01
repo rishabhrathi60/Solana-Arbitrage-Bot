@@ -1,0 +1,345 @@
+{
+  "schema_version": "14G.1.0",
+  "summary": {
+    "generated_at": "2026-08-01T06:09:33.593+00:00",
+    "schema_version": "14G.1.0",
+    "operating_mode": "TINY_PILOT_AUDIT_ONLY",
+    "configuration_safe": true,
+    "human_approval_complete": false,
+    "upstream_gates_passed": false,
+    "gate_checks": 16,
+    "gate_checks_passed": 9,
+    "approval_items": 6,
+    "approval_items_approved": 0,
+    "blocking_failures": 13,
+    "blocking_reasons": [
+      "Phase 13F institutional live readiness remains blocked.",
+      "Phase 14A shadow operational gate remains blocked.",
+      "Phase 14B edge diagnostics remain blocked.",
+      "Phase 14D security audit remains blocked.",
+      "Phase 14E execution-aware filter remains blocked.",
+      "Phase 14F consolidated post-filter readiness must pass before pilot review.",
+      "Explicit human approval has not been recorded.",
+      "Human approval incomplete: Independent evidence and post-filter readiness have passed all required gates.",
+      "Human approval incomplete: Wallet isolation, secret handling, and kill-switch controls have been manually reviewed.",
+      "Human approval incomplete: Maximum $5 trade, $20 daily notional, $2 daily loss, and four-trade daily limits are approved.",
+      "Human approval incomplete: A named operator is assigned to start, observe, and stop the pilot manually.",
+      "Human approval incomplete: Emergency-stop procedure and incident escalation contacts are documented and reviewed.",
+      "Human approval incomplete: Explicit human authorization for a tiny live pilot has been recorded outside the bot."
+    ],
+    "tiny_pilot_review_eligible": false,
+    "final_decision": "BLOCK_TINY_LIVE_PILOT",
+    "upstream": {
+      "phase_13f_live_readiness_allowed": false,
+      "phase_14a_operational_gate_passed": false,
+      "phase_14b_diagnostics_passed": false,
+      "phase_14c_resilience_passed": true,
+      "phase_14d_security_audit_passed": false,
+      "phase_14e_filter_passed": false,
+      "phase_14f_readiness_allowed": false
+    },
+    "safety": {
+      "pilot_enabled": false,
+      "wallet_connected": false,
+      "private_key_loaded": false,
+      "transaction_signing_enabled": false,
+      "transaction_broadcasting_enabled": false,
+      "live_execution_enabled": false,
+      "automatic_promotion_enabled": false
+    },
+    "valid": true
+  },
+  "configuration": {
+    "phase_13f_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json",
+    "phase_14a_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+    "phase_14b_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_execution_diagnostics_report.json",
+    "phase_14c_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/resilience_results/operational_resilience_report.json",
+    "phase_14d_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/live_readiness_audit_report.json",
+    "phase_14e_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_report.json",
+    "phase_14f_report": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/post_filter_readiness/post_filter_readiness_report.json",
+    "output_directory": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/tiny_pilot_audit",
+    "overwrite": true,
+    "pilot_enabled": false,
+    "human_approval_granted": false,
+    "wallet_connection_allowed": false,
+    "signing_allowed": false,
+    "broadcasting_allowed": false,
+    "automatic_promotion_allowed": false,
+    "maximum_trade_usd": 5.0,
+    "maximum_daily_notional_usd": 20.0,
+    "maximum_daily_loss_usd": 2.0,
+    "maximum_trades_per_day": 4,
+    "maximum_open_positions": 1,
+    "maximum_consecutive_losses": 2,
+    "maximum_slippage_bps": 20.0,
+    "maximum_quote_age_ms": 1000.0,
+    "maximum_confirmation_wait_ms": 30000.0,
+    "require_phase_13f": true,
+    "require_phase_14a": true,
+    "require_phase_14b": true,
+    "require_phase_14c": true,
+    "require_phase_14d": true,
+    "require_phase_14e": true,
+    "require_phase_14f": true
+  },
+  "pilot_configuration": {
+    "schema_version": "14G.1.0",
+    "generated_at": "2026-08-01T06:09:33.592+00:00",
+    "operating_mode": "TINY_PILOT_AUDIT_ONLY",
+    "pilot_enabled": false,
+    "human_approval_granted": false,
+    "wallet_connection_allowed": false,
+    "private_key_loading_allowed": false,
+    "transaction_signing_allowed": false,
+    "transaction_broadcasting_allowed": false,
+    "automatic_promotion_allowed": false,
+    "limits": {
+      "maximum_trade_usd": 5.0,
+      "maximum_daily_notional_usd": 20.0,
+      "maximum_daily_loss_usd": 2.0,
+      "maximum_trades_per_day": 4,
+      "maximum_open_positions": 1,
+      "maximum_consecutive_losses": 2,
+      "maximum_slippage_bps": 20.0,
+      "maximum_quote_age_ms": 1000.0,
+      "maximum_confirmation_wait_ms": 30000.0
+    },
+    "mandatory_controls": {
+      "manual_start_required": true,
+      "manual_stop_available": true,
+      "emergency_stop_required": true,
+      "daily_loss_stop_required": true,
+      "consecutive_loss_stop_required": true,
+      "duplicate_submission_guard_required": true,
+      "quote_expiry_guard_required": true,
+      "transaction_simulation_required": true,
+      "human_approval_required": true,
+      "audit_logging_required": true
+    }
+  },
+  "gate_checks": [
+    {
+      "name": "PHASE_13F_LIVE_READINESS",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "message": "Phase 13F institutional live readiness remains blocked."
+    },
+    {
+      "name": "PHASE_14A_OPERATIONAL_GATE",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "message": "Phase 14A shadow operational gate remains blocked."
+    },
+    {
+      "name": "PHASE_14B_DIAGNOSTICS_GATE",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "message": "Phase 14B edge diagnostics remain blocked."
+    },
+    {
+      "name": "PHASE_14C_RESILIENCE_GATE",
+      "passed": true,
+      "blocking": true,
+      "observed": true,
+      "comparison": "==",
+      "required": true,
+      "message": "Phase 14C resilience gate must pass."
+    },
+    {
+      "name": "PHASE_14D_SECURITY_GATE",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "message": "Phase 14D security audit remains blocked."
+    },
+    {
+      "name": "PHASE_14E_FILTER_GATE",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "message": "Phase 14E execution-aware filter remains blocked."
+    },
+    {
+      "name": "PHASE_14F_POST_FILTER_GATE",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "message": "Phase 14F consolidated post-filter readiness must pass before pilot review."
+    },
+    {
+      "name": "PILOT_DISABLED_BY_DEFAULT",
+      "passed": true,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": false,
+      "message": "Tiny pilot must remain disabled by default."
+    },
+    {
+      "name": "NO_WALLET_ACCESS",
+      "passed": true,
+      "blocking": true,
+      "observed": 0,
+      "comparison": "==",
+      "required": 0,
+      "message": "Wallet access, signing, and broadcasting must remain disabled during audit."
+    },
+    {
+      "name": "NO_AUTOMATIC_PROMOTION",
+      "passed": true,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": false,
+      "message": "Automatic promotion must remain disabled."
+    },
+    {
+      "name": "HUMAN_APPROVAL_GRANTED",
+      "passed": false,
+      "blocking": true,
+      "observed": false,
+      "comparison": "==",
+      "required": true,
+      "message": "Explicit human approval has not been recorded."
+    },
+    {
+      "name": "TINY_TRADE_LIMIT",
+      "passed": true,
+      "blocking": true,
+      "observed": 5.0,
+      "comparison": "<=",
+      "required": 5.0,
+      "message": "Maximum tiny-pilot trade amount exceeds $5."
+    },
+    {
+      "name": "DAILY_NOTIONAL_LIMIT",
+      "passed": true,
+      "blocking": true,
+      "observed": 20.0,
+      "comparison": "<=",
+      "required": 20.0,
+      "message": "Maximum daily pilot notional exceeds $20."
+    },
+    {
+      "name": "DAILY_LOSS_LIMIT",
+      "passed": true,
+      "blocking": true,
+      "observed": 2.0,
+      "comparison": "<=",
+      "required": 2.0,
+      "message": "Maximum daily pilot loss exceeds $2."
+    },
+    {
+      "name": "DAILY_TRADE_LIMIT",
+      "passed": true,
+      "blocking": true,
+      "observed": 4,
+      "comparison": "<=",
+      "required": 4,
+      "message": "Maximum trades per day exceeds four."
+    },
+    {
+      "name": "OPEN_POSITION_LIMIT",
+      "passed": true,
+      "blocking": true,
+      "observed": 1,
+      "comparison": "==",
+      "required": 1,
+      "message": "Tiny pilot must allow only one open position."
+    }
+  ],
+  "human_approval_checklist": [
+    {
+      "item_id": "APPROVAL_001",
+      "category": "RESEARCH",
+      "description": "Independent evidence and post-filter readiness have passed all required gates.",
+      "required": true,
+      "approved": false,
+      "approver": "",
+      "approved_at": "",
+      "evidence_reference": "Phases 13F and 14A-14F",
+      "blocking": true
+    },
+    {
+      "item_id": "APPROVAL_002",
+      "category": "SECURITY",
+      "description": "Wallet isolation, secret handling, and kill-switch controls have been manually reviewed.",
+      "required": true,
+      "approved": false,
+      "approver": "",
+      "approved_at": "",
+      "evidence_reference": "Phase 14D",
+      "blocking": true
+    },
+    {
+      "item_id": "APPROVAL_003",
+      "category": "RISK",
+      "description": "Maximum $5 trade, $20 daily notional, $2 daily loss, and four-trade daily limits are approved.",
+      "required": true,
+      "approved": false,
+      "approver": "",
+      "approved_at": "",
+      "evidence_reference": "tiny_pilot_configuration.json",
+      "blocking": true
+    },
+    {
+      "item_id": "APPROVAL_004",
+      "category": "OPERATIONS",
+      "description": "A named operator is assigned to start, observe, and stop the pilot manually.",
+      "required": true,
+      "approved": false,
+      "approver": "",
+      "approved_at": "",
+      "evidence_reference": "Manual operating procedure",
+      "blocking": true
+    },
+    {
+      "item_id": "APPROVAL_005",
+      "category": "INCIDENT_RESPONSE",
+      "description": "Emergency-stop procedure and incident escalation contacts are documented and reviewed.",
+      "required": true,
+      "approved": false,
+      "approver": "",
+      "approved_at": "",
+      "evidence_reference": "Phase 14C and operating procedure",
+      "blocking": true
+    },
+    {
+      "item_id": "APPROVAL_006",
+      "category": "FINAL_AUTHORIZATION",
+      "description": "Explicit human authorization for a tiny live pilot has been recorded outside the bot.",
+      "required": true,
+      "approved": false,
+      "approver": "",
+      "approved_at": "",
+      "evidence_reference": "External signed approval",
+      "blocking": true
+    }
+  ],
+  "governance": {
+    "audit_only": true,
+    "pilot_enabled": false,
+    "wallet_connection_authorized": false,
+    "private_key_access_authorized": false,
+    "transaction_signing_enabled": false,
+    "transaction_broadcasting_enabled": false,
+    "live_execution_enabled": false,
+    "automatic_promotion_enabled": false,
+    "external_human_approval_required": true
+  }
+}

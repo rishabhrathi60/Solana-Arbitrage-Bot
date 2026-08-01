@@ -1,0 +1,119 @@
+{
+  "schema_version": "14F.1.0",
+  "generated_at": "2026-08-01T06:09:14.431+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T06:09:14.423+00:00",
+    "schema_version": "14F.1.0",
+    "operating_mode": "POST_FILTER_GOVERNANCE_ONLY",
+    "gate_checks": 17,
+    "gate_checks_passed": 4,
+    "blocking_failures": 13,
+    "blocking_reasons": [
+      "Phase 13F institutional live readiness remains blocked.",
+      "Collect more institutional observations.",
+      "Collect more complete institutional scanner cycles.",
+      "Collect more genuinely profitable observations.",
+      "Collect more verified-live observations.",
+      "Collect more verified-live scanner cycles.",
+      "Collect more independent out-of-sample trades.",
+      "Phase 14A operational shadow gate remains blocked.",
+      "Phase 14B edge diagnostics remain blocked.",
+      "Phase 14D security audit remains blocked.",
+      "Too few independent trades survive the execution-aware filter.",
+      "Filtered profits remain too concentrated in one source trade.",
+      "Phase 14E execution-aware filter remains blocked."
+    ],
+    "operational_controls_passed": false,
+    "post_filter_economics_passed": false,
+    "evidence_sufficiency_passed": false,
+    "post_filter_readiness_allowed": false,
+    "live_readiness_allowed": false,
+    "promotion_allowed": false,
+    "final_decision": "BLOCK_LIVE_EXECUTION",
+    "evidence": {
+      "institutional_rows": 0,
+      "institutional_cycles": 0,
+      "profitable_observations": 0,
+      "verified_live_rows": 0,
+      "verified_live_cycles": 0,
+      "out_of_sample_trades": 0,
+      "accepted_filtered_trades": 1,
+      "filtered_profitable_confirmation_rate": 1.0,
+      "filtered_median_realized_profit_usd": 0.021398250063543515,
+      "filtered_single_trade_concentration": 1.0
+    },
+    "safety": {
+      "wallet_connected": false,
+      "private_key_loaded": false,
+      "transaction_signing_enabled": false,
+      "transaction_broadcasting_enabled": false,
+      "live_execution_enabled": false,
+      "automatic_promotion_enabled": false
+    },
+    "valid": true
+  },
+  "inputs": {
+    "phase_13f": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json",
+      "exists": true,
+      "bytes": 853,
+      "sha256": "2f1d58be1377f1aec6a6cdd091035e42a31369894373c175b2cc68c851d6ac78"
+    },
+    "phase_14a": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+      "exists": true,
+      "bytes": 6949,
+      "sha256": "94d4761a2f20016328a06cd79ea89688f6a21d4280aea5ff59e6f64ef77a58af"
+    },
+    "phase_14b": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_execution_diagnostics_report.json",
+      "exists": true,
+      "bytes": 4007,
+      "sha256": "14d025aefe6ffedc3422fe92430b3ede67c0e598b902236c3a421ccac5843818"
+    },
+    "phase_14c": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/resilience_results/operational_resilience_report.json",
+      "exists": true,
+      "bytes": 4468,
+      "sha256": "26cb264a7da4a42c4f8966584c794935838742a10a8663d4078422de799fc994"
+    },
+    "phase_14d": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/live_readiness_audit_report.json",
+      "exists": true,
+      "bytes": 9823,
+      "sha256": "de970a2a50b26e23413586fc6a7fc9d067e9594ca8b22fce3b68a9b6d182f418"
+    },
+    "phase_14e": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_report.json",
+      "exists": true,
+      "bytes": 5547,
+      "sha256": "d5de5cf8adddea3395f2cec92328b68fd09b1f4042dd82f50b2bdb7dd5eae0bd"
+    }
+  },
+  "outputs": {
+    "post_filter_readiness_gate_checks.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/post_filter_readiness/post_filter_readiness_gate_checks.csv",
+      "rows": 17,
+      "bytes": 3991,
+      "sha256": "c6509765c9bb0a1f5b6dfc9cb31960e90fd39f5d802c4ac7ae5dedeef14eda33"
+    },
+    "post_filter_evidence_summary.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/post_filter_readiness/post_filter_evidence_summary.csv",
+      "rows": 10,
+      "bytes": 1484,
+      "sha256": "5b6278977c1147f57df7c5ff0d3c7439a9247f9a85ed21f4487f42628aeab051"
+    },
+    "post_filter_readiness_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/post_filter_readiness/post_filter_readiness_report.json",
+      "rows": null,
+      "bytes": 13191,
+      "sha256": "dd9dadd67d6a47eaf5fc4cd3f90ff24497b4d0b385d7b353797d08de5697b5b0"
+    },
+    "executive_summary.txt": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/post_filter_readiness/executive_summary.txt",
+      "rows": null,
+      "bytes": 1724,
+      "sha256": "933d0a30b062a78c0e80cc1114f104d9af57b9966610e79c850829d3fabb45d1"
+    }
+  }
+}

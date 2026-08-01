@@ -1,0 +1,35 @@
+{
+  "schema_version": "14G.1.0",
+  "generated_at": "2026-08-01T06:09:33.592+00:00",
+  "operating_mode": "TINY_PILOT_AUDIT_ONLY",
+  "pilot_enabled": false,
+  "human_approval_granted": false,
+  "wallet_connection_allowed": false,
+  "private_key_loading_allowed": false,
+  "transaction_signing_allowed": false,
+  "transaction_broadcasting_allowed": false,
+  "automatic_promotion_allowed": false,
+  "limits": {
+    "maximum_trade_usd": 5.0,
+    "maximum_daily_notional_usd": 20.0,
+    "maximum_daily_loss_usd": 2.0,
+    "maximum_trades_per_day": 4,
+    "maximum_open_positions": 1,
+    "maximum_consecutive_losses": 2,
+    "maximum_slippage_bps": 20.0,
+    "maximum_quote_age_ms": 1000.0,
+    "maximum_confirmation_wait_ms": 30000.0
+  },
+  "mandatory_controls": {
+    "manual_start_required": true,
+    "manual_stop_available": true,
+    "emergency_stop_required": true,
+    "daily_loss_stop_required": true,
+    "consecutive_loss_stop_required": true,
+    "duplicate_submission_guard_required": true,
+    "quote_expiry_guard_required": true,
+    "transaction_simulation_required": true,
+    "human_approval_required": true,
+    "audit_logging_required": true
+  }
+}

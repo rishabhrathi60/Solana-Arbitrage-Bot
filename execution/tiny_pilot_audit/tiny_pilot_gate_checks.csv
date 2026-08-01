@@ -1,0 +1,17 @@
+name,passed,blocking,observed,comparison,required,message
+PHASE_13F_LIVE_READINESS,False,True,False,==,True,Phase 13F institutional live readiness remains blocked.
+PHASE_14A_OPERATIONAL_GATE,False,True,False,==,True,Phase 14A shadow operational gate remains blocked.
+PHASE_14B_DIAGNOSTICS_GATE,False,True,False,==,True,Phase 14B edge diagnostics remain blocked.
+PHASE_14C_RESILIENCE_GATE,True,True,True,==,True,Phase 14C resilience gate must pass.
+PHASE_14D_SECURITY_GATE,False,True,False,==,True,Phase 14D security audit remains blocked.
+PHASE_14E_FILTER_GATE,False,True,False,==,True,Phase 14E execution-aware filter remains blocked.
+PHASE_14F_POST_FILTER_GATE,False,True,False,==,True,Phase 14F consolidated post-filter readiness must pass before pilot review.
+PILOT_DISABLED_BY_DEFAULT,True,True,False,==,False,Tiny pilot must remain disabled by default.
+NO_WALLET_ACCESS,True,True,0,==,0,"Wallet access, signing, and broadcasting must remain disabled during audit."
+NO_AUTOMATIC_PROMOTION,True,True,False,==,False,Automatic promotion must remain disabled.
+HUMAN_APPROVAL_GRANTED,False,True,False,==,True,Explicit human approval has not been recorded.
+TINY_TRADE_LIMIT,True,True,5.0,<=,5.0,Maximum tiny-pilot trade amount exceeds $5.
+DAILY_NOTIONAL_LIMIT,True,True,20.0,<=,20.0,Maximum daily pilot notional exceeds $20.
+DAILY_LOSS_LIMIT,True,True,2.0,<=,2.0,Maximum daily pilot loss exceeds $2.
+DAILY_TRADE_LIMIT,True,True,4,<=,4,Maximum trades per day exceeds four.
+OPEN_POSITION_LIMIT,True,True,1,==,1,Tiny pilot must allow only one open position.

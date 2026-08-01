@@ -1,0 +1,45 @@
+Phase 14G — Tiny-Pilot Configuration and Human Approval Audit
+================================================================================
+
+Final decision: BLOCK_TINY_LIVE_PILOT
+Tiny-pilot review eligible: False
+Configuration safe: True
+Human approval complete: False
+
+Pilot limits
+--------------------------------------------------------------------------------
+maximum_trade_usd: 5.0
+maximum_daily_notional_usd: 20.0
+maximum_daily_loss_usd: 2.0
+maximum_trades_per_day: 4
+maximum_open_positions: 1
+maximum_consecutive_losses: 2
+maximum_slippage_bps: 20.0
+maximum_quote_age_ms: 1000.0
+maximum_confirmation_wait_ms: 30000.0
+
+Blocking reasons
+--------------------------------------------------------------------------------
+- Phase 13F institutional live readiness remains blocked.
+- Phase 14A shadow operational gate remains blocked.
+- Phase 14B edge diagnostics remain blocked.
+- Phase 14D security audit remains blocked.
+- Phase 14E execution-aware filter remains blocked.
+- Phase 14F consolidated post-filter readiness must pass before pilot review.
+- Explicit human approval has not been recorded.
+- Human approval incomplete: Independent evidence and post-filter readiness have passed all required gates.
+- Human approval incomplete: Wallet isolation, secret handling, and kill-switch controls have been manually reviewed.
+- Human approval incomplete: Maximum $5 trade, $20 daily notional, $2 daily loss, and four-trade daily limits are approved.
+- Human approval incomplete: A named operator is assigned to start, observe, and stop the pilot manually.
+- Human approval incomplete: Emergency-stop procedure and incident escalation contacts are documented and reviewed.
+- Human approval incomplete: Explicit human authorization for a tiny live pilot has been recorded outside the bot.
+
+Safety state
+--------------------------------------------------------------------------------
+Pilot enabled: False
+Wallet connected: False
+Private key loaded: False
+Transaction signing: False
+Transaction broadcasting: False
+Live execution: False
+Automatic promotion: False

@@ -1,0 +1,129 @@
+{
+  "schema_version": "14G.1.0",
+  "generated_at": "2026-08-01T06:09:33.605+00:00",
+  "summary": {
+    "generated_at": "2026-08-01T06:09:33.593+00:00",
+    "schema_version": "14G.1.0",
+    "operating_mode": "TINY_PILOT_AUDIT_ONLY",
+    "configuration_safe": true,
+    "human_approval_complete": false,
+    "upstream_gates_passed": false,
+    "gate_checks": 16,
+    "gate_checks_passed": 9,
+    "approval_items": 6,
+    "approval_items_approved": 0,
+    "blocking_failures": 13,
+    "blocking_reasons": [
+      "Phase 13F institutional live readiness remains blocked.",
+      "Phase 14A shadow operational gate remains blocked.",
+      "Phase 14B edge diagnostics remain blocked.",
+      "Phase 14D security audit remains blocked.",
+      "Phase 14E execution-aware filter remains blocked.",
+      "Phase 14F consolidated post-filter readiness must pass before pilot review.",
+      "Explicit human approval has not been recorded.",
+      "Human approval incomplete: Independent evidence and post-filter readiness have passed all required gates.",
+      "Human approval incomplete: Wallet isolation, secret handling, and kill-switch controls have been manually reviewed.",
+      "Human approval incomplete: Maximum $5 trade, $20 daily notional, $2 daily loss, and four-trade daily limits are approved.",
+      "Human approval incomplete: A named operator is assigned to start, observe, and stop the pilot manually.",
+      "Human approval incomplete: Emergency-stop procedure and incident escalation contacts are documented and reviewed.",
+      "Human approval incomplete: Explicit human authorization for a tiny live pilot has been recorded outside the bot."
+    ],
+    "tiny_pilot_review_eligible": false,
+    "final_decision": "BLOCK_TINY_LIVE_PILOT",
+    "upstream": {
+      "phase_13f_live_readiness_allowed": false,
+      "phase_14a_operational_gate_passed": false,
+      "phase_14b_diagnostics_passed": false,
+      "phase_14c_resilience_passed": true,
+      "phase_14d_security_audit_passed": false,
+      "phase_14e_filter_passed": false,
+      "phase_14f_readiness_allowed": false
+    },
+    "safety": {
+      "pilot_enabled": false,
+      "wallet_connected": false,
+      "private_key_loaded": false,
+      "transaction_signing_enabled": false,
+      "transaction_broadcasting_enabled": false,
+      "live_execution_enabled": false,
+      "automatic_promotion_enabled": false
+    },
+    "valid": true
+  },
+  "inputs": {
+    "phase_13f": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json",
+      "exists": true,
+      "bytes": 853,
+      "sha256": "2f1d58be1377f1aec6a6cdd091035e42a31369894373c175b2cc68c851d6ac78"
+    },
+    "phase_14a": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_results/shadow_execution_report.json",
+      "exists": true,
+      "bytes": 6949,
+      "sha256": "94d4761a2f20016328a06cd79ea89688f6a21d4280aea5ff59e6f64ef77a58af"
+    },
+    "phase_14b": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/shadow_diagnostics/shadow_execution_diagnostics_report.json",
+      "exists": true,
+      "bytes": 4007,
+      "sha256": "14d025aefe6ffedc3422fe92430b3ede67c0e598b902236c3a421ccac5843818"
+    },
+    "phase_14c": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/resilience_results/operational_resilience_report.json",
+      "exists": true,
+      "bytes": 4468,
+      "sha256": "26cb264a7da4a42c4f8966584c794935838742a10a8663d4078422de799fc994"
+    },
+    "phase_14d": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/live_readiness_audit/live_readiness_audit_report.json",
+      "exists": true,
+      "bytes": 9823,
+      "sha256": "de970a2a50b26e23413586fc6a7fc9d067e9594ca8b22fce3b68a9b6d182f418"
+    },
+    "phase_14e": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_report.json",
+      "exists": true,
+      "bytes": 5547,
+      "sha256": "d5de5cf8adddea3395f2cec92328b68fd09b1f4042dd82f50b2bdb7dd5eae0bd"
+    },
+    "phase_14f": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/post_filter_readiness/post_filter_readiness_report.json",
+      "exists": true,
+      "bytes": 13191,
+      "sha256": "dd9dadd67d6a47eaf5fc4cd3f90ff24497b4d0b385d7b353797d08de5697b5b0"
+    }
+  },
+  "outputs": {
+    "tiny_pilot_configuration.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/tiny_pilot_audit/tiny_pilot_configuration.json",
+      "rows": null,
+      "bytes": 1161,
+      "sha256": "b9764963437769c4583156afc255ee96cdf854f93efa9fff37cdbe49e7da8d8f"
+    },
+    "tiny_pilot_gate_checks.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/tiny_pilot_audit/tiny_pilot_gate_checks.csv",
+      "rows": 16,
+      "bytes": 1571,
+      "sha256": "107aacce4e701d061b383a473e7c27c8ee536a697a88a4837edc28b544677e70"
+    },
+    "human_approval_checklist.csv": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/tiny_pilot_audit/human_approval_checklist.csv",
+      "rows": 6,
+      "bytes": 1029,
+      "sha256": "cc476383e147059f2213dc1730b5e44d6c9e7ae6fd89a7cd8edee9990e0ec84c"
+    },
+    "tiny_pilot_audit_report.json": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/tiny_pilot_audit/tiny_pilot_audit_report.json",
+      "rows": null,
+      "bytes": 11924,
+      "sha256": "fa43393e88871f70cbe9b920531136e74f2cbdaad904456d0f004f0330ba77a4"
+    },
+    "executive_summary.txt": {
+      "path": "/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/tiny_pilot_audit/executive_summary.txt",
+      "rows": null,
+      "bytes": 2068,
+      "sha256": "e27c5b681fadaac73c0683e29f4a880816911c66602d2f0da2736eb82aec063e"
+    }
+  }
+}

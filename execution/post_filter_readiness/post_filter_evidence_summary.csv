@@ -1,0 +1,11 @@
+metric,value,source
+institutional_rows,0,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json
+institutional_cycles,0,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json
+profitable_observations,0,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json
+verified_live_rows,0,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json
+verified_live_cycles,0,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json
+out_of_sample_trades,0,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/research/institutional_promotion_gate/institutional_promotion_decision.json
+accepted_filtered_trades,1,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_report.json
+filtered_profitable_confirmation_rate,1.0,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_report.json
+filtered_median_realized_profit_usd,0.021398250063543515,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_report.json
+filtered_single_trade_concentration,1.0,/Users/anmolkaur/Desktop/Solan-Arbitrage-Bot/execution/execution_aware_filter/execution_aware_report.json
