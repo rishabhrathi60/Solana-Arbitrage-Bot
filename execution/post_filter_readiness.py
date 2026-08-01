@@ -320,6 +320,20 @@ class PostFilterReadinessGate:
             required=self.config.require_phase_13f,
         )
 
+        # The Phase 13F decision file intentionally contains only the
+        # promotion decision and blocking reasons. Detailed evidence is
+        # stored in the sibling institutional_evidence_report.json file.
+        phase_13f_evidence_path = (
+            self.config.phase_13f_report.with_name(
+                "institutional_evidence_report.json"
+            )
+        )
+
+        phase_13f_evidence = load_json(
+            phase_13f_evidence_path,
+            required=self.config.require_phase_13f,
+        )
+
         phase_14a = load_json(
             self.config.phase_14a_report,
             required=self.config.require_phase_14a,
@@ -351,74 +365,49 @@ class PostFilterReadinessGate:
         phase_14d_summary = phase_14d.get("summary", {})
         phase_14e_summary = phase_14e.get("summary", {})
 
+        phase_13f_evidence_root = phase_13f_evidence.get(
+            "evidence",
+            {},
+        )
+
+        institutional_evidence = phase_13f_evidence_root.get(
+            "institutional_dataset",
+            {},
+        )
+
+        walk_forward_evidence = phase_13f_evidence_root.get(
+            "walk_forward",
+            {},
+        )
+
         institutional_rows = safe_int(
-            phase_13f.get(
-                "evidence",
-                {},
-            ).get(
-                "institutional_dataset",
-                {},
-            ).get(
-                "total_rows"
-            )
+            institutional_evidence.get("total_rows")
         )
 
         institutional_cycles = safe_int(
-            phase_13f.get(
-                "evidence",
-                {},
-            ).get(
-                "institutional_dataset",
-                {},
-            ).get(
-                "total_cycles"
-            )
+            institutional_evidence.get("total_cycles")
         )
 
         profitable_observations = safe_int(
-            phase_13f.get(
-                "evidence",
-                {},
-            ).get(
-                "institutional_dataset",
-                {},
-            ).get(
+            institutional_evidence.get(
                 "profitable_observations"
             )
         )
 
         verified_live_rows = safe_int(
-            phase_13f.get(
-                "evidence",
-                {},
-            ).get(
-                "institutional_dataset",
-                {},
-            ).get(
+            institutional_evidence.get(
                 "verified_live_rows"
             )
         )
 
         verified_live_cycles = safe_int(
-            phase_13f.get(
-                "evidence",
-                {},
-            ).get(
-                "institutional_dataset",
-                {},
-            ).get(
+            institutional_evidence.get(
                 "verified_live_cycles"
             )
         )
 
         out_of_sample_trades = safe_int(
-            phase_13f.get(
-                "evidence",
-                {},
-            ).get(
-                "walk_forward",
-                {},
-            ).get(
+            walk_forward_evidence.get(
                 "out_of_sample_trades"
             )
         )
